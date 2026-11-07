@@ -64,7 +64,8 @@ export class Player extends Container {
   /** Platform we just dropped through; ignored until dropTimer runs out. */
   private droppingThrough: Platform | null = null;
   private dropTimer = 0;
-  private lastSafe = { x: 200, y: GROUND_Y };
+  /** True while being launched back up out of a pit (ignores jump-cut until the apex). */
+  private pitBounce = false;
 
   /** Horizontal movement limits. The fight scene moves minX to lock the player into the arena. */
   minX = 0;
@@ -85,10 +86,9 @@ export class Player extends Container {
     this.play("Idle");
   }
 
-  /** Place the player on the floor at `x` (also becomes the pit respawn point). */
+  /** Place the player on the floor at `x`. */
   spawnAt(x: number): void {
     this.position.set(x, GROUND_Y);
-    this.lastSafe = { x, y: GROUND_Y };
   }
 
   get bodyHeight(): number {
@@ -136,6 +136,11 @@ export class Player extends Container {
 
   takeHit(): void {
     if (this.isInvulnerable || this.isDead) return;
+    this.applyDamage();
+  }
+
+  /** Lose 1 HP and start i-frames, ignoring current invulnerability. */
+  private applyDamage(): void {
     this.hp = Math.max(0, this.hp - 1);
     this.invulnTimer = PLAYER.invulnTime;
     this.hurtTimer = 0.25;
@@ -192,7 +197,7 @@ export class Player extends Container {
 
     if (this.dashTimer > 0) {
       this.vx = this.facing * PLAYER.dashSpeed;
-      this.vy = 0; // dash hangs in the air
+      if (!this.pitBounce) this.vy = 0; // dash hangs in the air (but doesn't cancel a pit launch)
     } else {
       this.vx = locked || this.crouching ? 0 : ax * PLAYER.speed;
 
@@ -209,7 +214,8 @@ export class Player extends Container {
           this.canParry = false;
         }
       }
-      if (!input.isDown("jump") && this.vy < 0 && !this.isParrying) this.vy *= 0.5;
+      if (this.pitBounce && this.vy >= 0) this.pitBounce = false;
+      if (!input.isDown("jump") && this.vy < 0 && !this.isParrying && !this.pitBounce) this.vy *= 0.5;
 
       this.vy = Math.min(this.vy + PLAYER.gravity * dt, PLAYER.maxFallSpeed);
     }
@@ -258,15 +264,8 @@ export class Player extends Container {
       }
     }
 
-    // Remember the last safe spot to respawn at after falling into a pit (pulled in from edges).
-    if (this.onGround && !this.standingOn) {
-      this.lastSafe = { x: terrain ? terrain.safeFloorX(this.x) : this.x, y: GROUND_Y };
-    } else if (this.standingOn && !this.standingOn.moving) {
-      const p = this.standingOn;
-      const m = Math.min(30, p.w / 2);
-      this.lastSafe = { x: Math.max(p.left + m, Math.min(p.right - m, this.x)), y: p.top };
-    }
-    if (this.y > GAME_HEIGHT + 150) this.fellInPit();
+    if (this.onGround) this.pitBounce = false;
+    if (this.y > GAME_HEIGHT + PLAYER.height && this.vy > 0) this.fellInPit();
     if (!wasOnGround && this.onGround && fallSpeed > 300) {
       this.landTimer = 0.15;
       this.fx?.spawn("fx", "Smoke", this.x, this.y - 12, { scale: 0.5, fps: 20 });
@@ -365,15 +364,20 @@ export class Player extends Container {
     }
   }
 
-  /** Lose 1 HP and respawn at the last safe ground. */
+  /**
+   * Lose 1 HP and get launched back up out of the pit, keeping horizontal momentum
+   * (no teleport). Pits always hurt, even mid-dash or right after another hit.
+   */
   private fellInPit(): void {
-    this.position.set(this.lastSafe.x, this.lastSafe.y);
-    this.vx = this.vy = 0;
-    this.dashTimer = 0;
+    // Launch high enough to peak PLAYER.pitBounceHeight px above the floor, so the player can steer onto a ledge.
+    const rise = this.y - (GROUND_Y - PLAYER.pitBounceHeight);
+    this.vy = -Math.sqrt(2 * PLAYER.gravity * rise);
+    this.pitBounce = true;
     this.standingOn = null;
-    this.onGround = true;
-    this.invulnTimer = 0; // pits always hurt, even right after another hit
-    this.takeHit();
+    this.onGround = false;
+    this.canParry = true;
+    this.parryTimer = 0;
+    this.applyDamage();
     // TODO(audio): fall sound
   }
 

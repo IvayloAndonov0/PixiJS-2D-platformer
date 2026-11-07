@@ -93,7 +93,7 @@ Each boss can have a **parkour intro** (`intro` in `src/bosses.ts`). The parkour
 The camera follows the player through the parkour. When they pass x = 140, a gate drops behind them,
 the camera locks on the arena, the boss HUD appears and the boss wakes up. There's no going back.
 
-Falling into a pit costs 1 HP and respawns you on the last safe ground. Spikes hurt on touch.
+Falling into a pit costs 1 HP and launches you back up out of it (keeping your momentum) with brief i-frames. Spikes hurt on touch.
 Edit `src/level/parkour.ts` to change the course. Reach: full jump ≈ 155px up / 250px across, jump + dash ≈ 400px across.
 Set `DEBUG_HITBOXES = true` in `config.ts` to draw hitboxes.
 

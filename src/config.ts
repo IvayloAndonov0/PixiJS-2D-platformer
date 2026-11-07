@@ -29,6 +29,7 @@ export const PLAYER = {
   deathFreeze: 0.35, // s freeze at the moment of death
   deathDuration: 2.5, // s the death animation plays before the results screen
   dropThroughTime: 0.25, // s a platform is ignored after dropping through it
+  pitBounceHeight: 220, // px above the floor the player is launched to after falling into a pit
 };
 
 /**
