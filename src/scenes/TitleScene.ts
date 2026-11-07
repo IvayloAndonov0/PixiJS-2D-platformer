@@ -2,10 +2,10 @@ import { Text } from "pixi.js";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { Scene } from "../core/Scene";
 import { MenuList } from "../ui/MenuList";
-import { MapScene } from "./MapScene";
+import { FileSelectScene } from "./FileSelectScene";
 import { SettingsScene } from "./SettingsScene";
 
-/** Title: Play (-> overworld map) and Settings. TODO(ui): real logo, menu art, music. */
+/** Title: Play (-> file select -> overworld map) and Settings. TODO(ui): real logo, menu art, music. */
 export class TitleScene extends Scene {
   private menu!: MenuList;
   private controls = new Text({ text: "", style: { fill: COLORS.text, fontSize: 18, align: "center" } });
@@ -22,7 +22,7 @@ export class TitleScene extends Scene {
     this.controls.position.set(GAME_WIDTH / 2, GAME_HEIGHT - 60);
 
     this.menu = new MenuList([
-      { label: "Play", onSelect: () => this.game.changeScene(new MapScene(this.game)) },
+      { label: "Play", onSelect: () => this.game.changeScene(new FileSelectScene(this.game)) },
       { label: "Settings", onSelect: () => this.game.changeScene(new SettingsScene(this.game)) },
     ]);
     this.menu.position.set(GAME_WIDTH / 2, 300);

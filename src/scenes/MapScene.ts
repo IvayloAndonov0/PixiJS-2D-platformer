@@ -3,6 +3,7 @@ import { anim } from "../assets";
 import { BOSSES } from "../bosses";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { formatTime, getRecord } from "../core/Progress";
+import { currentSave, saveGame } from "../core/SaveSystem";
 import { Scene } from "../core/Scene";
 import { LAKE, MAP_H, MAP_NODES, MAP_PATHS, MAP_START, MAP_W, type MapNode } from "../level/overworld";
 import { MenuList } from "../ui/MenuList";
@@ -21,9 +22,6 @@ interface Circle {
   y: number;
   r: number;
 }
-
-/** Where the player stands when coming back to the map (kept for this browser session). */
-let returnPos: { x: number; y: number } | undefined;
 
 /**
  * Top-down overworld. Walk with the movement keys (or click to walk there), stand next to a
@@ -60,6 +58,13 @@ export class MapScene extends Scene {
   private fade = new Graphics().rect(0, 0, GAME_WIDTH, GAME_HEIGHT).fill(0x000000);
   private next?: () => void;
 
+  /** "Game saved" notice. */
+  private toast = new Text({
+    text: "",
+    style: { fill: COLORS.parryable, fontSize: 24, fontWeight: "bold", stroke: { color: 0x000000, width: 5 } },
+  });
+  private toastTimer = 0;
+
   override enter(): void {
     const rand = mulberry32(7);
     this.world.addChild(this.drawGround(rand), this.drawPaths(), this.drawLake(), this.objects);
@@ -68,7 +73,7 @@ export class MapScene extends Scene {
     MAP_NODES.forEach((n) => this.addMarker(n));
     this.buildPlayer();
 
-    const start = returnPos ?? MAP_START;
+    const start = currentSave().mapPos ?? MAP_START;
     this.player.position.set(start.x, start.y);
 
     this.buildCard();
@@ -79,8 +84,11 @@ export class MapScene extends Scene {
     });
     hint.position.set(14, 10);
 
+    this.toast.anchor.set(1, 0);
+    this.toast.position.set(GAME_WIDTH - 16, 10);
+
     this.fade.alpha = 1; // fade in
-    this.addChild(this.world, hint, this.card, this.menuOverlay, this.fade);
+    this.addChild(this.world, hint, this.card, this.menuOverlay, this.toast, this.fade);
     this.updateCamera(true);
   }
 
@@ -95,6 +103,8 @@ export class MapScene extends Scene {
       return;
     }
     this.fade.alpha = Math.max(0, this.fade.alpha - dt / FADE_TIME);
+    this.toastTimer = Math.max(0, this.toastTimer - dt);
+    this.toast.alpha = Math.min(1, this.toastTimer / 0.4);
 
     if (this.menuOpen) {
       if (input.menuPressed("back")) this.setMenu(false);
@@ -274,7 +284,7 @@ export class MapScene extends Scene {
   private enterNode(node: MapNode): void {
     if (node.boss === undefined || this.next) return;
     const bossIndex = node.boss;
-    returnPos = { x: node.x, y: node.y + 60 };
+    this.autosave({ x: node.x, y: node.y + 60 }); // come back standing next to this level
     this.startFade(() => this.game.changeScene(new BossFightScene(this.game, bossIndex)));
   }
 
@@ -340,10 +350,23 @@ export class MapScene extends Scene {
     title.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 150);
     this.menu = new MenuList([
       { label: "Resume", onSelect: () => this.setMenu(false) },
-      { label: "Settings", onSelect: () => this.startFade(() => this.game.changeScene(new SettingsScene(this.game))) },
-      { label: "Title screen", onSelect: () => this.startFade(() => this.game.changeScene(new TitleScene(this.game))) },
+      { label: "Save game", onSelect: () => this.manualSave() },
+      {
+        label: "Settings",
+        onSelect: () => {
+          this.autosave();
+          this.startFade(() => this.game.changeScene(new SettingsScene(this.game, () => new MapScene(this.game))));
+        },
+      },
+      {
+        label: "Title screen",
+        onSelect: () => {
+          this.autosave();
+          this.startFade(() => this.game.changeScene(new TitleScene(this.game)));
+        },
+      },
     ]);
-    this.menu.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80);
+    this.menu.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90);
     this.menuOverlay.addChild(dim, title, this.menu);
     this.menuOverlay.visible = false;
   }
@@ -352,7 +375,20 @@ export class MapScene extends Scene {
     this.menuOpen = open;
     this.menuOverlay.visible = open;
     this.menu.selected = 0;
-    if (open) returnPos = { x: this.player.x, y: this.player.y };
+  }
+
+  /** Store the player's map position in the save file and write it. */
+  private autosave(pos = { x: this.player.x, y: this.player.y }): boolean {
+    currentSave().mapPos = { x: Math.round(pos.x), y: Math.round(pos.y) };
+    return saveGame();
+  }
+
+  private manualSave(): void {
+    const ok = this.autosave();
+    this.setMenu(false);
+    this.toast.text = ok ? "Game saved" : "No save file selected";
+    this.toast.style.fill = ok ? COLORS.parryable : COLORS.bossBar;
+    this.toastTimer = 2;
   }
 
   private startFade(then: () => void): void {

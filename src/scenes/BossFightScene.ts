@@ -164,6 +164,7 @@ export class BossFightScene extends Scene {
             hpLeft: this.player.hp,
             maxHp: PLAYER.maxHp,
             parries: this.parries,
+            supers: this.player.supersUsed,
             bossDamage: won ? 1 : 1 - Math.max(0, this.boss.hp) / this.boss.maxHp,
             parTime: BOSSES[this.bossIndex].parTime ?? 90,
           }),

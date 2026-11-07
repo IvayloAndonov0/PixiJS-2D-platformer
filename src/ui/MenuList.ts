@@ -73,7 +73,8 @@ export class MenuList extends Container {
     return false;
   }
 
-  private redraw(): void {
+  /** Redraw highlights, e.g. after setting `selected` directly. */
+  redraw(): void {
     this.buttons.forEach(({ bg }, i) => {
       const sel = i === this.selected;
       bg.clear()

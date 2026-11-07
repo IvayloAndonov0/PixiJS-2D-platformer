@@ -43,6 +43,8 @@ export class Player extends Container {
   crouching = false;
   /** Super meter, 0..SUPER.max */
   meter = 0;
+  /** Supers fired this fight (counts toward the grade). */
+  supersUsed = 0;
 
   private sprite: AnimatedSprite;
   private currentAnim?: AnimName;
@@ -419,6 +421,7 @@ export class Player extends Container {
 
   private fireSpecial(): void {
     this.meter = 0;
+    this.supersUsed++;
     this.invulnTimer = Math.max(this.invulnTimer, SUPER.invulnTime);
     this.fx?.spawn("super", "SuperCircle", this.x, this.y, { scale: 0.9, fps: 14 });
     const { x, y } = this.muzzle();

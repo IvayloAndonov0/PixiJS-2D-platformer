@@ -1,10 +1,13 @@
+import { currentSave, saveGame } from "./SaveSystem";
+
 /**
- * Fight results, letter grades and per-boss best attempts (saved in localStorage).
+ * Fight results, letter grades and per-boss best attempts (stored in the current save file, see SaveSystem).
  *
- * Grade (wins only), out of 100 points:
- *   - HP left:  up to 40  (full HP = 40)
- *   - Parries:  up to 20  (PARRIES_FOR_FULL or more = 20)
- *   - Time:     up to 40  (at or under the boss's par time = 40, dropping to 0 at twice the par)
+ * Grade (wins only), out of 100 points. Tune the weights in SCORING:
+ *   - Time:     at or under the boss's par time = full, dropping to 0 at twice the par
+ *   - HP left:  full HP = full points
+ *   - Parries:  `full` parries or more = full points
+ *   - Supers:   `full` supers fired or more = full points
  * Losses are recorded as how far the boss's health bar got (0..100%).
  */
 
@@ -15,6 +18,7 @@ export interface FightResult {
   hpLeft: number;
   maxHp: number;
   parries: number;
+  supers: number;
   /** How much of the boss's health was taken, 0..1 (1 on a win). */
   bossDamage: number;
   /** Target clear time for full time points, seconds. */
@@ -32,8 +36,22 @@ export interface BossRecord {
   bestDamage: number;
 }
 
-const PARRIES_FOR_FULL = 3;
-const STORAGE_KEY = "boss-rush.progress.v1";
+/** Max points per category (should add up to 100) and what earns full points. */
+export const SCORING = {
+  time: 35,
+  hp: 30,
+  parries: { points: 20, full: 3 },
+  supers: { points: 15, full: 2 },
+};
+
+export interface ScoreLine {
+  label: string;
+  /** What the player did, e.g. "1:10 / 1:30" or "2 / 3". */
+  value: string;
+  points: number;
+  max: number;
+}
+
 
 const GRADES: [number, string][] = [
   [95, "A+"],
@@ -48,12 +66,40 @@ const GRADES: [number, string][] = [
   [0, "D"],
 ];
 
-export function scoreOf(r: FightResult): number {
-  const hp = (r.hpLeft / r.maxHp) * 40;
-  const parry = (Math.min(r.parries, PARRIES_FOR_FULL) / PARRIES_FOR_FULL) * 20;
+/** Points per category for a win, in display order. */
+export function scoreBreakdown(r: FightResult): ScoreLine[] {
   const over = Math.max(0, r.time - r.parTime) / r.parTime;
-  const time = Math.max(0, 1 - over) * 40;
-  return Math.round(hp + parry + time);
+  const { parries, supers } = SCORING;
+  return [
+    {
+      label: "Time",
+      value: `${formatTime(r.time)} / ${formatTime(r.parTime)}`,
+      points: Math.round(Math.max(0, 1 - over) * SCORING.time),
+      max: SCORING.time,
+    },
+    {
+      label: "HP Left",
+      value: `${r.hpLeft} / ${r.maxHp}`,
+      points: Math.round((r.hpLeft / r.maxHp) * SCORING.hp),
+      max: SCORING.hp,
+    },
+    {
+      label: "Parries",
+      value: `${r.parries} / ${parries.full}`,
+      points: Math.round((Math.min(r.parries, parries.full) / parries.full) * parries.points),
+      max: parries.points,
+    },
+    {
+      label: "Supers",
+      value: `${r.supers} / ${supers.full}`,
+      points: Math.round((Math.min(r.supers, supers.full) / supers.full) * supers.points),
+      max: supers.points,
+    },
+  ];
+}
+
+export function scoreOf(r: FightResult): number {
+  return scoreBreakdown(r).reduce((sum, l) => sum + l.points, 0);
 }
 
 export function gradeOf(score: number): string {
@@ -66,24 +112,17 @@ export function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function loadAll(): Record<string, BossRecord> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    return data && typeof data === "object" ? data : {};
-  } catch {
-    return {};
-  }
-}
-
-/** Best attempt for a boss, or undefined if it was never played. Keyed by boss name. */
+/** Best attempt for a boss in the current save file, or undefined if it was never played. */
 export function getRecord(bossName: string): BossRecord | undefined {
-  return loadAll()[bossName];
+  return currentSave().bosses[bossName];
 }
 
-/** Save a finished fight. Returns whether it beat the previous best (grade on a win, % on a loss). */
+/**
+ * Record a finished fight in the current save file and autosave.
+ * Returns whether it beat the previous best (grade on a win, % on a loss).
+ */
 export function recordResult(bossName: string, r: FightResult): boolean {
-  const all = loadAll();
+  const all = currentSave().bosses;
   const prev = all[bossName];
   const rec: BossRecord = prev ? { ...prev } : { attempts: 0, won: false, bestDamage: 0 };
   rec.attempts++;
@@ -104,10 +143,6 @@ export function recordResult(bossName: string, r: FightResult): boolean {
   rec.bestDamage = Math.max(rec.bestDamage, r.bossDamage);
 
   all[bossName] = rec;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  } catch {
-    // Storage blocked: progress just won't persist.
-  }
+  saveGame();
   return improved;
 }
