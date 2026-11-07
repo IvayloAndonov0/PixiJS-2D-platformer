@@ -13,11 +13,13 @@ export interface BossEntry {
   create: BossFactory;
   /** One-way platforms inside the arena (x 0..1280). Use [] for a flat arena. */
   platforms: PlatformDef[];
+  /** Clear time (seconds) that still earns full time points for the grade. Default 90. */
+  parTime?: number;
   /** Parkour section before the arena (at negative x). Omit to start right in the arena. */
   intro?: IntroDef;
 }
 
-/** Every fightable boss, in order. Add yours here and it shows up on the title screen. */
+/** Every fightable boss, in order. Add yours here, then give it a spot on the map in level/overworld.ts. */
 export const BOSSES: BossEntry[] = [
   { name: "Example Boss", create: (b, p) => new ExampleBoss(b, p), platforms: DEFAULT_PLATFORMS, intro: PARKOUR_1 },
 ];

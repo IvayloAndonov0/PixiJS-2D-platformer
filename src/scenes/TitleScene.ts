@@ -1,14 +1,12 @@
 import { Text } from "pixi.js";
-import { BOSSES } from "../bosses";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { Scene } from "../core/Scene";
-import { BossFightScene } from "./BossFightScene";
-import { SettingsScene } from "./SettingsScene";
 import { MenuList } from "../ui/MenuList";
+import { MapScene } from "./MapScene";
+import { SettingsScene } from "./SettingsScene";
 
-/** Title + boss select + settings. TODO(ui): real logo, menu art, music. */
+/** Title: Play (-> overworld map) and Settings. TODO(ui): real logo, menu art, music. */
 export class TitleScene extends Scene {
-  /** One entry per boss, then Settings. */
   private menu!: MenuList;
   private controls = new Text({ text: "", style: { fill: COLORS.text, fontSize: 18, align: "center" } });
 
@@ -24,7 +22,7 @@ export class TitleScene extends Scene {
     this.controls.position.set(GAME_WIDTH / 2, GAME_HEIGHT - 60);
 
     this.menu = new MenuList([
-      ...BOSSES.map((b, i) => ({ label: b.name, onSelect: () => this.game.changeScene(new BossFightScene(this.game, i)) })),
+      { label: "Play", onSelect: () => this.game.changeScene(new MapScene(this.game)) },
       { label: "Settings", onSelect: () => this.game.changeScene(new SettingsScene(this.game)) },
     ]);
     this.menu.position.set(GAME_WIDTH / 2, 300);
