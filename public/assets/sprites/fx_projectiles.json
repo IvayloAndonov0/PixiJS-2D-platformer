@@ -1,0 +1,525 @@
+{
+ "frames": {
+  "Bullet_0": {
+   "frame": {
+    "x": 46,
+    "y": 0,
+    "w": 51,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 51,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 51,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Bullet_1": {
+   "frame": {
+    "x": 120,
+    "y": 0,
+    "w": 59,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Bullet_2": {
+   "frame": {
+    "x": 200,
+    "y": 0,
+    "w": 63,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 63,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 63,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Bullet_3": {
+   "frame": {
+    "x": 286,
+    "y": 0,
+    "w": 78,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 78,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 78,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Bullet_4": {
+   "frame": {
+    "x": 390,
+    "y": 0,
+    "w": 94,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 94,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 94,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Card_0": {
+   "frame": {
+    "x": 567,
+    "y": 0,
+    "w": 53,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 53,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 53,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Card_1": {
+   "frame": {
+    "x": 648,
+    "y": 0,
+    "w": 73,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 73,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 73,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Card_2": {
+   "frame": {
+    "x": 748,
+    "y": 0,
+    "w": 82,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Card_3": {
+   "frame": {
+    "x": 848,
+    "y": 0,
+    "w": 79,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Card_4": {
+   "frame": {
+    "x": 946,
+    "y": 0,
+    "w": 78,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 78,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 78,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Spark_0": {
+   "frame": {
+    "x": 1068,
+    "y": 0,
+    "w": 40,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 40,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 40,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Spark_1": {
+   "frame": {
+    "x": 1142,
+    "y": 0,
+    "w": 53,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 53,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 53,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Spark_2": {
+   "frame": {
+    "x": 1227,
+    "y": 0,
+    "w": 70,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 70,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 70,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Spark_3": {
+   "frame": {
+    "x": 1322,
+    "y": 0,
+    "w": 85,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 85,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 85,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Ring_0": {
+   "frame": {
+    "x": 1437,
+    "y": 0,
+    "w": 78,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 78,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 78,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Ring_1": {
+   "frame": {
+    "x": 1544,
+    "y": 0,
+    "w": 87,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 87,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 87,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Smoke_0": {
+   "frame": {
+    "x": 1668,
+    "y": 0,
+    "w": 73,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 73,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 73,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Smoke_1": {
+   "frame": {
+    "x": 1780,
+    "y": 0,
+    "w": 55,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 55,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 55,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Smoke_2": {
+   "frame": {
+    "x": 1872,
+    "y": 0,
+    "w": 43,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Smoke_3": {
+   "frame": {
+    "x": 1952,
+    "y": 0,
+    "w": 28,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  }
+ },
+ "animations": {
+  "Bullet": [
+   "Bullet_0",
+   "Bullet_1",
+   "Bullet_2",
+   "Bullet_3",
+   "Bullet_4"
+  ],
+  "Card": [
+   "Card_0",
+   "Card_1",
+   "Card_2",
+   "Card_3",
+   "Card_4"
+  ],
+  "Spark": [
+   "Spark_0",
+   "Spark_1",
+   "Spark_2",
+   "Spark_3"
+  ],
+  "Ring": [
+   "Ring_0",
+   "Ring_1"
+  ],
+  "Smoke": [
+   "Smoke_0",
+   "Smoke_1",
+   "Smoke_2",
+   "Smoke_3"
+  ]
+ },
+ "meta": {
+  "image": "fx_projectiles.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 2048,
+   "h": 128
+  },
+  "scale": "1"
+ }
+}

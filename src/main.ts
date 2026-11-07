@@ -1,24 +1,19 @@
-import { Application, Graphics } from "pixi.js";
+import { loadAssets } from "./assets";
+import { Game } from "./core/Game";
+import { BossFightScene } from "./scenes/BossFightScene";
+import { TitleScene } from "./scenes/TitleScene";
 
 (async () => {
-  const app = new Application();
-  await app.init({
-    background: "#1e1e2e",
-    resizeTo: window,
-    antialias: false,
-  });
-  document.getElementById("app")!.appendChild(app.canvas);
+  const game = new Game();
+  await game.init(document.getElementById("app")!);
+  await loadAssets();
 
-  // Placeholder: a ground strip and a player box to confirm rendering works
-  const ground = new Graphics().rect(0, 0, app.screen.width, 40).fill(0x4caf50);
-  ground.y = app.screen.height - 40;
-  app.stage.addChild(ground);
-
-  const player = new Graphics().rect(-16, -32, 32, 32).fill(0xffcc00);
-  player.position.set(app.screen.width / 2, ground.y);
-  app.stage.addChild(player);
-
-  app.ticker.add(() => {
-    // game loop goes here
-  });
+  // Dev shortcuts:
+  //   ?fight=0         start boss #0's level (parkour first)
+  //   ?fight=0&arena   skip the parkour, start locked in the arena
+  const params = new URLSearchParams(location.search);
+  const fight = params.get("fight");
+  game.changeScene(
+    fight !== null ? new BossFightScene(game, Number(fight) || 0, params.has("arena")) : new TitleScene(game),
+  );
 })();
