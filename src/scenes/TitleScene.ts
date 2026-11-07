@@ -4,17 +4,13 @@ import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { Scene } from "../core/Scene";
 import { BossFightScene } from "./BossFightScene";
 import { SettingsScene } from "./SettingsScene";
+import { MenuList } from "../ui/MenuList";
 
 /** Title + boss select + settings. TODO(ui): real logo, menu art, music. */
 export class TitleScene extends Scene {
-  private selected = 0;
-  private menu = new Text({ text: "", style: { fill: COLORS.text, fontSize: 28, align: "center" } });
+  /** One entry per boss, then Settings. */
+  private menu!: MenuList;
   private controls = new Text({ text: "", style: { fill: COLORS.text, fontSize: 18, align: "center" } });
-
-  /** Menu entries: one per boss, then Settings. */
-  private get items(): string[] {
-    return [...BOSSES.map((b) => b.name), "Settings"];
-  }
 
   override enter(): void {
     const title = new Text({
@@ -27,9 +23,16 @@ export class TitleScene extends Scene {
     this.controls.anchor.set(0.5);
     this.controls.position.set(GAME_WIDTH / 2, GAME_HEIGHT - 60);
 
-    this.menu.anchor.set(0.5, 0);
-    this.menu.position.set(GAME_WIDTH / 2, 320);
-    this.addChild(title, this.menu, this.controls);
+    this.menu = new MenuList([
+      ...BOSSES.map((b, i) => ({ label: b.name, onSelect: () => this.game.changeScene(new BossFightScene(this.game, i)) })),
+      { label: "Settings", onSelect: () => this.game.changeScene(new SettingsScene(this.game)) },
+    ]);
+    this.menu.position.set(GAME_WIDTH / 2, 300);
+
+    const hint = new Text({ text: "Enter / Click to select", style: { fill: COLORS.text, fontSize: 18 } });
+    hint.anchor.set(0.5, 0);
+    hint.position.set(GAME_WIDTH / 2, this.menu.y + this.menu.height + 20);
+    this.addChild(title, this.menu, hint, this.controls);
 
     // Show the player's actual (possibly rebound) controls.
     const k = (a: Parameters<typeof this.game.input.labelFor>[0]) => this.game.input.labelFor(a);
@@ -39,16 +42,6 @@ export class TitleScene extends Scene {
   }
 
   update(): void {
-    const input = this.game.input;
-    const n = this.items.length;
-    if (input.menuPressed("up")) this.selected = (this.selected - 1 + n) % n;
-    if (input.menuPressed("down")) this.selected = (this.selected + 1) % n;
-    if (input.menuPressed("confirm")) {
-      if (this.selected < BOSSES.length) this.game.changeScene(new BossFightScene(this.game, this.selected));
-      else this.game.changeScene(new SettingsScene(this.game));
-    }
-
-    this.menu.text =
-      this.items.map((name, i) => (i === this.selected ? `> ${name} <` : name)).join("\n") + "\n\nEnter to select";
+    this.menu.update(this.game.input);
   }
 }

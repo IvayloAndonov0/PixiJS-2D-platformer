@@ -11,6 +11,7 @@ import { BulletPool } from "../systems/BulletPool";
 import { Effects } from "../systems/Effects";
 import { circleRect, rectsOverlap } from "../systems/collision";
 import { HUD } from "../ui/HUD";
+import { MenuList } from "../ui/MenuList";
 import { ResultScene } from "./ResultScene";
 import { TitleScene } from "./TitleScene";
 
@@ -40,7 +41,9 @@ export class BossFightScene extends Scene {
   private gate = new Graphics();
   private banner: Text;
   private paused = false;
-  private pauseText: Text;
+  private pauseOverlay = new Container();
+  private pauseMenu!: MenuList;
+  private pauseHint!: Text;
 
   private cameraX = 0;
   private locked = false;
@@ -90,15 +93,12 @@ export class BossFightScene extends Scene {
     this.banner.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60);
     this.banner.visible = false;
 
-    this.pauseText = new Text({ text: "", style: { fill: COLORS.text, fontSize: 48, align: "center" } });
-    this.pauseText.anchor.set(0.5);
-    this.pauseText.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2);
-    this.pauseText.visible = false;
+    this.buildPauseOverlay();
     this.flash.alpha = 0;
 
     // World draw order: back to front. World scrolls with the camera; the rest is screen-space.
     this.world.addChild(this.terrain, ...signs, this.gate, this.boss, this.player, this.playerBullets, this.bossBullets, this.fx);
-    this.addChild(this.background, this.world, this.flash, this.hud, this.banner, this.pauseText);
+    this.addChild(this.background, this.world, this.flash, this.hud, this.banner, this.pauseOverlay);
 
     if (intro) {
       this.player.spawnAt(intro.start);
@@ -114,13 +114,10 @@ export class BossFightScene extends Scene {
 
   update(dt: number): void {
     const input = this.game.input;
-    if (input.wasPressed("pause") && this.endTimer === 0) {
-      this.paused = !this.paused;
-      this.pauseText.text = `PAUSED\n\n${input.labelFor("pause")}: resume\nBackspace: quit to title`;
-      this.pauseText.visible = this.paused;
-    }
+    if (input.wasPressed("pause") && this.endTimer === 0) this.setPaused(!this.paused);
     if (this.paused) {
-      if (input.menuPressed("clear")) this.game.changeScene(new TitleScene(this.game));
+      if (input.menuPressed("clear")) this.quitToTitle();
+      else this.pauseMenu.update(input);
       return;
     }
 
@@ -266,5 +263,38 @@ export class BossFightScene extends Scene {
 
     // Contact damage
     if (rectsOverlap(playerBox, bossBox)) this.player.takeHit();
+  }
+
+  // ---------------------------------------------------------------- pause menu
+
+  private buildPauseOverlay(): void {
+    const dim = new Graphics().rect(0, 0, GAME_WIDTH, GAME_HEIGHT).fill({ color: 0x000000, alpha: 0.5 });
+    dim.eventMode = "static"; // swallow clicks so they don't reach anything underneath
+    const title = new Text({ text: "PAUSED", style: { fill: COLORS.text, fontSize: 64, fontWeight: "bold" } });
+    title.anchor.set(0.5);
+    title.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 120);
+    this.pauseMenu = new MenuList([
+      { label: "Resume", onSelect: () => this.setPaused(false) },
+      { label: "Quit to title", onSelect: () => this.quitToTitle() },
+    ]);
+    this.pauseMenu.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+    this.pauseHint = new Text({ text: "", style: { fill: COLORS.text, fontSize: 18, align: "center" } });
+    this.pauseHint.anchor.set(0.5, 0);
+    this.pauseHint.position.set(GAME_WIDTH / 2, this.pauseMenu.y + this.pauseMenu.height + 20);
+    this.pauseOverlay.addChild(dim, title, this.pauseMenu, this.pauseHint);
+    this.pauseOverlay.visible = false;
+  }
+
+  private setPaused(paused: boolean): void {
+    this.paused = paused;
+    this.pauseOverlay.visible = paused;
+    if (paused) {
+      this.pauseMenu.selected = 0;
+      this.pauseHint.text = `Enter / Click: select    ${this.game.input.labelFor("pause")}: resume    Backspace: quit`;
+    }
+  }
+
+  private quitToTitle(): void {
+    this.game.changeScene(new TitleScene(this.game));
   }
 }

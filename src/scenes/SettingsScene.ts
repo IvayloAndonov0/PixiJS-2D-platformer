@@ -62,8 +62,7 @@ export class SettingsScene extends Scene {
         cell.addChild(bg, text);
         cell.eventMode = "static";
         cell.cursor = "pointer";
-        cell.on("pointertap", () => {
-          if (this.capturing) return;
+        this.onClick(cell, () => {
           this.row = r;
           this.col = c;
           this.pendingCapture = { row: r, col: c };
@@ -74,8 +73,8 @@ export class SettingsScene extends Scene {
       this.cells.push(rowCells);
     });
 
-    this.resetBtn.container.on("pointertap", () => !this.capturing && this.game.input.resetToDefaults());
-    this.backBtn.container.on("pointertap", () => !this.capturing && this.goBack());
+    this.onClick(this.resetBtn.container, () => this.game.input.resetToDefaults());
+    this.onClick(this.backBtn.container, () => this.goBack());
 
     this.hint.anchor.set(0.5, 1);
     this.hint.position.set(GAME_WIDTH / 2, GAME_HEIGHT - 16);
@@ -107,6 +106,21 @@ export class SettingsScene extends Scene {
     }
 
     this.redraw();
+  }
+
+  /**
+   * Click handler that ignores clicks whose press started during a rebind. Otherwise binding a
+   * mouse button by clicking on a slot would end the capture on press, then the release would
+   * count as a fresh click and start rebinding again.
+   */
+  private onClick(target: Container, fn: () => void): void {
+    let armed = false;
+    // Pixi's pointerdown fires before Input's window mousedown, so `capturing` is still accurate here.
+    target.on("pointerdown", () => (armed = !this.capturing));
+    target.on("pointertap", () => {
+      if (armed && !this.capturing && !this.pendingCapture) fn();
+      armed = false;
+    });
   }
 
   private startCapture(row: number, col: number): void {
