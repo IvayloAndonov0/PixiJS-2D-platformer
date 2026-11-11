@@ -237,7 +237,10 @@ export class Player extends Container {
     const terrain = this.terrain;
 
     // Inside a pit: the pit walls are solid, don't slide into the floor from the side.
-    if (this.y > GROUND_Y + 2 && terrain?.floorUnder(this.x, footHalf)) this.x = prevX;
+    // Check where we were at the start of the frame (prevY), not after gravity: while standing
+    // on the floor, gravity nudges y a few px below GROUND_Y each frame before the landing snap,
+    // and on slower frames that nudge passed the threshold and cancelled the horizontal step.
+    if (prevY > GROUND_Y + 2 && terrain?.floorUnder(this.x, footHalf)) this.x = prevX;
 
     this.dropTimer = Math.max(0, this.dropTimer - dt);
     if (this.dropTimer === 0) this.droppingThrough = null;
