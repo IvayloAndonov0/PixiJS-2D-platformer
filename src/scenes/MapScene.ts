@@ -1,5 +1,5 @@
-import { AnimatedSprite, Container, Graphics, Text, type FederatedPointerEvent } from "pixi.js";
-import { anim } from "../assets";
+import { AnimatedSprite, Container, Graphics, Sprite, Text, type FederatedPointerEvent } from "pixi.js";
+import { anim, image } from "../assets";
 import { BOSSES } from "../bosses";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { formatTime, getRecord } from "../core/Progress";
@@ -16,6 +16,8 @@ const FEET_R = 14; // player collision radius
 const NODE_RANGE = 95; // how close you must be to a level marker to enter it
 const PATH_CLEARANCE = 70; // keep trees this far from path centerlines
 const FADE_TIME = 0.35;
+const TREE_SCALE = 1.3; // Tree1.png is 128px; this makes it roughly the size of the old drawn trees
+const TREE_BASE_Y = 94 / 128; // shadow center in Tree1.png, as a fraction of its height
 
 interface Circle {
   x: number;
@@ -503,25 +505,11 @@ export class MapScene extends Scene {
 
   private addTree(x: number, y: number, rand: () => number): void {
     const s = 0.85 + rand() * 0.45;
-    const greens = [
-      [0x3f6b3a, 0x5a8a4a],
-      [0x355e33, 0x4f7f42],
-      [0x4a7a3c, 0x6a9a52],
-    ][Math.floor(rand() * 3)];
-    const t = new Graphics()
-      .ellipse(0, 0, 34, 11)
-      .fill({ color: 0x000000, alpha: 0.22 })
-      .rect(-7, -32, 14, 34)
-      .fill(0x6b4a2f)
-      .circle(-17, -50, 26)
-      .fill(greens[0])
-      .circle(17, -50, 26)
-      .fill(greens[0])
-      .circle(0, -72, 30)
-      .fill(greens[0])
-      .circle(-8, -78, 13)
-      .fill(greens[1]);
-    t.scale.set(s);
+    const flip = rand() < 0.5 ? -1 : 1; // mirror some trees for variety
+    const t = new Sprite(image("tree1"));
+    t.texture.source.scaleMode = "nearest"; // pixel art: keep it crisp when scaled up
+    t.anchor.set(0.5, TREE_BASE_Y); // the trunk base / shadow center sits on (x, y)
+    t.scale.set(s * TREE_SCALE * flip, s * TREE_SCALE);
     t.position.set(x, y);
     t.zIndex = y;
     this.objects.addChild(t);
