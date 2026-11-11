@@ -1,5 +1,5 @@
 import { AnimatedSprite, Container, Graphics, Sprite, Text, type FederatedPointerEvent } from "pixi.js";
-import { anim, image } from "../assets";
+import { anim, image, type ImageName } from "../assets";
 import { BOSSES } from "../bosses";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { formatTime, getRecord } from "../core/Progress";
@@ -19,10 +19,52 @@ const FADE_TIME = 0.35;
 const TREE_SCALE = 1.3; // Tree1.png is 128px; this makes it roughly the size of the old drawn trees
 const TREE_BASE_Y = 94 / 128; // shadow center in Tree1.png, as a fraction of its height
 
+const BUSH_COUNT = 70;
+const ROCK_COUNT = 25;
+const SCENERY_GAP = 6; // min space between a scattered bush/rock and any tree, rock or bush
+
+/**
+ * A scatterable sprite with the opaque part of its image (in texture pixels), so placement checks
+ * use what is actually visible instead of the transparent padding. `scale` brings them to a similar size.
+ */
+interface ScatterDef {
+  name: ImageName;
+  size: number;
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+  scale: number;
+}
+
+const ROCKS: ScatterDef[] = [
+  { name: "rock1", size: 64, minX: 5, maxX: 57, minY: 2, maxY: 61, scale: 1.1 },
+  { name: "rock2", size: 64, minX: 1, maxX: 60, minY: 2, maxY: 61, scale: 1.1 },
+  { name: "rock4", size: 64, minX: 1, maxX: 62, minY: 6, maxY: 57, scale: 1.1 },
+  { name: "rock5", size: 64, minX: 1, maxX: 61, minY: 0, maxY: 63, scale: 1.1 },
+];
+
+const BUSHES: ScatterDef[] = [
+  { name: "bushBlueFlowers", size: 64, minX: 15, maxX: 49, minY: 15, maxY: 50, scale: 1.4 },
+  { name: "bushRedFlowers", size: 64, minX: 12, maxX: 50, minY: 14, maxY: 52, scale: 1.4 },
+  { name: "bushSimple1", size: 32, minX: 1, maxX: 29, minY: 0, maxY: 29, scale: 1.6 },
+  { name: "bushSimple2", size: 32, minX: 1, maxX: 30, minY: 0, maxY: 30, scale: 1.6 },
+  { name: "fern1", size: 64, minX: 12, maxX: 51, minY: 14, maxY: 49, scale: 1.4 },
+  { name: "fern2", size: 64, minX: 15, maxX: 50, minY: 15, maxY: 48, scale: 1.4 },
+];
+
 interface Circle {
   x: number;
   y: number;
   r: number;
+}
+
+/** Axis-aligned box of a scenery object's visible area, in map coordinates. */
+interface Box {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
 }
 
 /**
@@ -41,6 +83,8 @@ export class MapScene extends Scene {
   private stuckTime = 0;
 
   private obstacles: Circle[] = [];
+  /** Visible areas of placed trees, rocks and bushes, so bushes never overlap them. */
+  private sceneryBoxes: Box[] = [];
   private markers: { node: MapNode; view: Container; flag: Container }[] = [];
   private focused?: MapNode;
   private time = 0;
@@ -72,6 +116,9 @@ export class MapScene extends Scene {
     this.world.addChild(this.drawGround(rand), this.drawPaths(), this.drawLake(), this.objects);
     this.objects.sortableChildren = true;
     this.placeScenery(rand);
+    // Own RNGs so adding these doesn't reshuffle the trees. Rocks first: they're solid, bushes fill in around them.
+    this.scatter(ROCKS, ROCK_COUNT, mulberry32(13), true);
+    this.scatter(BUSHES, BUSH_COUNT, mulberry32(11), false);
     MAP_NODES.forEach((n) => this.addMarker(n));
     this.buildPlayer();
 
@@ -474,7 +521,7 @@ export class MapScene extends Scene {
     return g;
   }
 
-  /** Scatter trees and rocks, dense along the border and sparse inside, never on paths or water. */
+  /** Scatter trees, dense along the border and sparse inside, never on paths or water. */
   private placeScenery(rand: () => number): void {
     const step = 95;
     for (let y = 40; y < MAP_H + 60; y += step) {
@@ -486,7 +533,9 @@ export class MapScene extends Scene {
         const r1 = rand();
         const r2 = rand();
         if (r1 > keep || !this.isOpen(px, py)) continue;
-        if (r2 < 0.15 && edge > 150) this.addRock(px, py, rand);
+        // These spots used to hold drawn rocks. Skip them, but still draw the number the rock used
+        // so the trees after it stay where they were.
+        if (r2 < 0.15 && edge > 150) rand();
         else this.addTree(px, py, rand);
       }
     }
@@ -514,23 +563,51 @@ export class MapScene extends Scene {
     t.zIndex = y;
     this.objects.addChild(t);
     this.obstacles.push({ x, y: y - 4, r: 18 * s });
+    // Opaque part of Tree1.png is x 33..94, y 25..102 of 128px, anchored at (64, 94).
+    const k = s * TREE_SCALE;
+    this.sceneryBoxes.push({ x0: x - 31 * k, x1: x + 31 * k, y0: y - 69 * k, y1: y + 8 * k });
   }
 
-  private addRock(x: number, y: number, rand: () => number): void {
-    const s = 0.7 + rand() * 0.6;
-    const r = new Graphics()
-      .ellipse(0, 2, 30, 10)
-      .fill({ color: 0x000000, alpha: 0.2 })
-      .ellipse(0, -10, 28, 18)
-      .fill(0x8a8577)
-      .ellipse(-6, -16, 12, 7)
-      .fill(0xa8a394);
-    r.scale.set(s);
-    r.position.set(x, y);
-    r.zIndex = y;
-    this.objects.addChild(r);
-    this.obstacles.push({ x, y: y - 6, r: 22 * s });
+  /**
+   * Scatter sprites at random open spots, never overlapping trees, rocks or bushes already placed.
+   * `solid` ones also block the player.
+   */
+  private scatter(defs: ScatterDef[], count: number, rand: () => number, solid: boolean): void {
+    let placed = 0;
+    for (let attempt = 0; attempt < count * 40 && placed < count; attempt++) {
+      const x = 40 + rand() * (MAP_W - 80);
+      const y = 60 + rand() * (MAP_H - 90);
+      const def = defs[Math.floor(rand() * defs.length)];
+      const k = def.scale * (0.85 + rand() * 0.3);
+      const flip = rand() < 0.5 ? -1 : 1;
+      if (!this.isOpen(x, y)) continue;
+
+      // Anchor at the bottom-center of the visible pixels so the sprite sits on (x, y).
+      const ax = (def.minX + def.maxX + 1) / 2;
+      const ay = def.maxY + 1;
+      const half = ((def.maxX - def.minX + 1) / 2) * k;
+      const height = (ay - def.minY) * k;
+      const box = { x0: x - half, x1: x + half, y0: y - height, y1: y };
+      if (this.sceneryBoxes.some((b) => overlaps(b, box, SCENERY_GAP))) continue;
+      // Collide with the lower part (the base), so the player can still pass behind the top.
+      if (solid) this.obstacles.push({ x, y: y - height * 0.3, r: half * 0.8 });
+
+      const b = new Sprite(image(def.name));
+      b.texture.source.scaleMode = "nearest";
+      b.anchor.set(ax / def.size, ay / def.size);
+      b.scale.set(k * flip, k);
+      b.position.set(x, y);
+      b.zIndex = y;
+      this.objects.addChild(b);
+      this.sceneryBoxes.push(box);
+      placed++;
+    }
   }
+
+}
+
+function overlaps(a: Box, b: Box, gap: number): boolean {
+  return a.x0 - gap < b.x1 && b.x0 - gap < a.x1 && a.y0 - gap < b.y1 && b.y0 - gap < a.y1;
 }
 
 function distToSegment(px: number, py: number, a: { x: number; y: number }, b: { x: number; y: number }): number {
