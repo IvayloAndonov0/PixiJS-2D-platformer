@@ -178,6 +178,191 @@ def main() -> None:
         [("SuperCircle", 5, "bottom"), ("SuperSmoke", 2, "bottom"), ("Vortex", 1, "center"), ("CardFan", 5, "center")],
         merge_gap=20,
     )
+    build_eclipse()
+
+
+# --------------------------------------------------------------------------------------
+# Eclipse Heart: a loose concept sheet (art/eclipse_heart_sheet.png), not on a grid.
+# Sprites are cut out by hand-picked boxes, cleaned of the faint background haze,
+# and packed into public/assets/sprites/eclipse.png. Each sprite is a 1-frame animation.
+# --------------------------------------------------------------------------------------
+
+ECLIPSE_SRC = ROOT / "art" / "eclipse_heart_sheet.png"
+ECLIPSE_HAZE = 30  # alpha at or below this is background haze and gets removed
+LABEL_SCALE = 4  # blobs are found on a 1/4 size copy (fast enough without numpy)
+
+# name: (left, top, right, bottom in the source, mode, anchor)
+#   mode "blob": keep only blobs whose center is inside the box (stops neighbours bleeding in)
+#   mode "box":  keep everything in the box except pixels that belong to a "blob" sprite
+#                or that fall in one of its ECLIPSE_EXCLUDE rectangles
+#   anchor "center" or "bottom"
+ECLIPSE_SPRITES = {
+    # Row 1: full body poses
+    "Pose1": (16, 8, 304, 334, "blob", "bottom"),
+    "Pose2": (310, 8, 592, 336, "blob", "bottom"),
+    "Pose3": (598, 8, 846, 322, "blob", "bottom"),
+    "Pose4": (848, 8, 1152, 336, "blob", "bottom"),
+    "Pose5": (1155, 6, 1525, 382, "blob", "bottom"),
+    # Row 3: orbs, stars, crescents
+    "OrbBig": (8, 500, 134, 612, "blob", "center"),
+    "OrbCracked": (136, 510, 200, 610, "blob", "center"),
+    "OrbSmall": (204, 515, 296, 600, "blob", "center"),
+    "OrbHalo": (296, 498, 412, 616, "blob", "center"),
+    "OrbCrescent": (412, 502, 532, 616, "blob", "center"),
+    "OrbTiny": (540, 522, 620, 600, "blob", "center"),
+    "StarOrb": (628, 496, 744, 620, "blob", "center"),
+    "Star": (744, 510, 816, 612, "blob", "center"),
+    "CrescentSmall": (816, 504, 888, 592, "blob", "center"),
+    "CrescentA": (896, 504, 968, 616, "blob", "center"),
+    "StarGold": (988, 512, 1112, 616, "blob", "center"),
+    "CrescentB": (1112, 516, 1192, 616, "blob", "center"),
+    "StarPurple": (1196, 512, 1308, 620, "blob", "center"),
+    "RingOval": (1384, 518, 1524, 610, "blob", "center"),
+    # Row 4: streaks, spear, lance
+    "Comet": (12, 610, 208, 700, "blob", "center"),
+    "CrescentDash": (208, 618, 344, 704, "blob", "center"),
+    "Bolt": (356, 618, 552, 690, "blob", "center"),
+    "Spear": (556, 612, 866, 698, "box", "center"),
+    "Lance": (1000, 614, 1296, 698, "blob", "center"),
+    "VoidOrb": (1300, 610, 1400, 700, "blob", "center"),
+    "VoidOrbSmall": (1400, 610, 1516, 690, "blob", "center"),
+    # Row 5: blades, vortex, meteors
+    "BladeBig": (12, 696, 160, 840, "blob", "center"),
+    "BladeA": (196, 700, 300, 832, "blob", "center"),
+    "BladeSwirl": (300, 696, 472, 832, "blob", "center"),
+    "Vortex": (468, 698, 680, 832, "blob", "center"),
+    "BladeThin": (684, 692, 766, 828, "blob", "center"),
+    "Shard": (766, 700, 824, 808, "blob", "center"),
+    "Meteor1": (844, 696, 972, 852, "box", "center"),  # touches the ground row, so cut by box
+    "MeteorSmall": (976, 688, 1052, 800, "blob", "center"),
+    "Meteor2": (1052, 696, 1150, 840, "blob", "center"),
+    "Meteor3": (1150, 696, 1256, 840, "blob", "center"),
+    "MeteorImpact": (1256, 704, 1400, 844, "blob", "bottom"),
+    "MeteorTall": (1400, 684, 1462, 864, "blob", "center"),
+    "Meteor4": (1462, 692, 1528, 836, "blob", "center"),
+    # Row 6: ground effects (these touch each other, so they're cut by box)
+    "Smoke1": (16, 850, 176, 1004, "box", "bottom"),
+    "Smoke2": (176, 850, 372, 1004, "box", "bottom"),
+    "Flame": (372, 870, 508, 1004, "box", "bottom"),
+    "Spikes": (508, 876, 748, 1004, "box", "bottom"),
+    "Rift": (744, 826, 916, 1004, "box", "bottom"),
+    "SpikesWide": (916, 876, 1134, 1004, "box", "bottom"),
+    "Eruption": (1134, 876, 1332, 1004, "box", "bottom"),
+    "Portal": (1332, 876, 1534, 1004, "box", "bottom"),
+}
+
+# Areas a "box" sprite must leave out because a neighbour overlaps its box there.
+ECLIPSE_EXCLUDE = {
+    "Meteor1": [(844, 826, 870, 852)],  # top-right edge of the Rift orb
+    "Rift": [(870, 826, 972, 852)],  # bottom of Meteor1
+}
+
+
+def label_blobs(alpha: Image.Image) -> tuple[list[list[int]], list[tuple[float, float]]]:
+    """Connected blobs on a downscaled mask. Returns (label grid [y][x], center of each label)."""
+    from PIL import ImageFilter
+
+    small = alpha.resize((alpha.width // LABEL_SCALE, alpha.height // LABEL_SCALE), Image.BOX)
+    small = small.point(lambda v: 255 if v > 45 else 0).filter(ImageFilter.MaxFilter(3))
+    w, h = small.size
+    px = small.load()
+    labels = [[0] * w for _ in range(h)]
+    centers: list[tuple[float, float]] = [(0, 0)]
+    for y in range(h):
+        for x in range(w):
+            if not px[x, y] or labels[y][x]:
+                continue
+            lid = len(centers)
+            stack = [(x, y)]
+            labels[y][x] = lid
+            x0 = x1 = x
+            y0 = y1 = y
+            while stack:
+                cx, cy = stack.pop()
+                x0, x1, y0, y1 = min(x0, cx), max(x1, cx), min(y0, cy), max(y1, cy)
+                for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and px[nx, ny] and not labels[ny][nx]:
+                        labels[ny][nx] = lid
+                        stack.append((nx, ny))
+            centers.append(((x0 + x1 + 1) / 2 * LABEL_SCALE, (y0 + y1 + 1) / 2 * LABEL_SCALE))
+    return labels, centers
+
+
+def build_eclipse() -> None:
+    if not ECLIPSE_SRC.exists():
+        print(f"skipped eclipse: {ECLIPSE_SRC.relative_to(ROOT)} not found")
+        return
+    src = Image.open(ECLIPSE_SRC).convert("RGBA")
+    # Remove the haze and stretch the remaining alpha back to 0..255.
+    alpha = src.getchannel("A").point(
+        lambda v: 0 if v <= ECLIPSE_HAZE else round((v - ECLIPSE_HAZE) * 255 / (255 - ECLIPSE_HAZE))
+    )
+    src.putalpha(alpha)
+    labels, centers = label_blobs(alpha)
+    lw, lh = len(labels[0]), len(labels)
+
+    def inside(c: tuple[float, float], box: tuple[int, int, int, int]) -> bool:
+        return box[0] <= c[0] < box[2] and box[1] <= c[1] < box[3]
+
+    # Which blobs belong to which "blob" sprite.
+    owned: dict[str, set[int]] = {}
+    claimed: set[int] = set()
+    for name, (l, t, r, b, mode, _) in ECLIPSE_SPRITES.items():
+        if mode == "blob":
+            ids = {i for i, c in enumerate(centers) if i and inside(c, (l, t, r, b))}
+            if not ids:
+                sys.exit(f"eclipse: no blob found for {name}")
+            owned[name] = ids
+            claimed |= ids
+
+    def label_at(x: int, y: int) -> int:
+        return labels[min(lh - 1, y // LABEL_SCALE)][min(lw - 1, x // LABEL_SCALE)]
+
+    cut: dict[str, Image.Image] = {}
+    for name, (l, t, r, b, mode, _) in ECLIPSE_SPRITES.items():
+        piece = src.crop((l, t, r, b))
+        a = piece.getchannel("A")
+        ap = a.load()
+        for y in range(b - t):
+            for x in range(r - l):
+                if not ap[x, y]:
+                    continue
+                lid = label_at(l + x, t + y)
+                if mode == "blob":
+                    keep = lid in owned[name]
+                else:
+                    keep = lid not in claimed and not any(
+                        el <= l + x < er and et <= t + y < eb for el, et, er, eb in ECLIPSE_EXCLUDE.get(name, [])
+                    )
+                if not keep:
+                    ap[x, y] = 0
+        piece.putalpha(a)
+        bbox = a.getbbox()
+        if not bbox:
+            sys.exit(f"eclipse: {name} came out empty")
+        cut[name] = piece.crop(bbox)
+
+    # Shelf-pack, tallest first.
+    width, pad = 2048, 2
+    placed: dict[str, tuple[int, int]] = {}
+    x, y, shelf_h = pad, pad, 0
+    for n in sorted(cut, key=lambda n: -cut[n].height):
+        im = cut[n]
+        if x + im.width + pad > width:
+            x, y, shelf_h = pad, y + shelf_h + pad, 0
+        placed[n] = (x, y)
+        x += im.width + pad
+        shelf_h = max(shelf_h, im.height)
+    sheet = Image.new("RGBA", (width, y + shelf_h + pad), (0, 0, 0, 0))
+    frames, animations = {}, {}
+    for n, (fx, fy) in placed.items():
+        im = cut[n]
+        sheet.paste(im, (fx, fy))
+        ay = 1.0 if ECLIPSE_SPRITES[n][5] == "bottom" else 0.5
+        frames[n] = frame_entry(fx, fy, im.width, im.height, 0.5, ay)
+        animations[n] = [n]
+    sheet.save(SPRITES / "eclipse.png", optimize=True)
+    write_sheet("eclipse", sheet, frames, animations)
 
 
 if __name__ == "__main__":

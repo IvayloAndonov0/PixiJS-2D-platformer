@@ -20,9 +20,10 @@ export interface MapNode {
 
 export const MAP_NODES: MapNode[] = [
   { x: 820, y: 940, boss: 0 },
-  { x: 1400, y: 640 },
-  { x: 2000, y: 980 },
-  { x: 1960, y: 340 },
+  { x: 1400, y: 640, boss: 1 },
+  { x: 2000, y: 980, boss: 2 },
+  { x: 1960, y: 340, boss: 3 },
+  { x: 720, y: 380, boss: 4 },
 ];
 
 /** Dirt paths as waypoint lists (drawn as smooth curves). Purely visual: you can walk anywhere open. */
@@ -31,6 +32,7 @@ export const MAP_PATHS: { x: number; y: number }[][] = [
   [MAP_NODES[0], { x: 1010, y: 860 }, { x: 1180, y: 700 }, MAP_NODES[1]],
   [MAP_NODES[1], { x: 1640, y: 700 }, { x: 1800, y: 900 }, MAP_NODES[2]],
   [MAP_NODES[1], { x: 1560, y: 470 }, { x: 1780, y: 360 }, MAP_NODES[3]],
+  [MAP_NODES[1], { x: 1220, y: 520 }, { x: 960, y: 420 }, MAP_NODES[4]],
 ];
 
 /** Lake, as overlapping circles (also its collision). */

@@ -1,6 +1,9 @@
 import { Container, Graphics } from "pixi.js";
+import type { BossModel } from "./art/BossModel";
 import { COLORS } from "../../config";
 import type { BulletPool } from "../../systems/BulletPool";
+import type { Bullet, BulletOptions } from "../Bullet";
+import { Effects } from "../../systems/Effects";
 import type { Rect } from "../../systems/collision";
 import type { Player } from "../Player";
 
@@ -34,6 +37,18 @@ export abstract class Boss extends Container {
   private restTimer = 1; // short delay before the first attack
   private flashTimer = 0;
 
+  /** Helpers for writing attacks: reset every time an attack starts. */
+  protected count = 0;
+  protected startX = 0;
+  /** True only on the first frame of an attack (pick targets, show telegraphs...). */
+  protected justStarted = false;
+
+  /** Drawn model that replaces the placeholder box (see useModel). */
+  protected model?: BossModel;
+
+  /** World-space effects layer. The fight scene replaces this with its own. */
+  fx = new Effects();
+
   protected abstract phases: Phase[];
 
   constructor(
@@ -43,11 +58,12 @@ export abstract class Boss extends Container {
     readonly bodyH: number,
     readonly bullets: BulletPool,
     readonly player: Player,
+    color: number = COLORS.boss,
   ) {
     super();
     this.hp = maxHp;
     // TODO(art): replace with boss sprite / animations per phase
-    this.body = new Graphics().rect(-bodyW / 2, -bodyH, bodyW, bodyH).fill(COLORS.boss);
+    this.body = new Graphics().rect(-bodyW / 2, -bodyH, bodyW, bodyH).fill(color);
     this.addChild(this.body);
   }
 
@@ -77,12 +93,27 @@ export abstract class Boss extends Container {
     }
   }
 
+  /** Swap the placeholder box for a drawn, animated model. */
+  protected useModel(model: BossModel): void {
+    this.body.visible = false;
+    this.model = model;
+    this.addChild(model);
+  }
+
+  /** Hook called when an attack finishes (back to the idle pose, etc.). */
+  protected onAttackEnd(): void {}
+
   /** Hook for phase transitions (new sprite, taunt, arena change...). */
   protected onPhaseChange(_index: number): void {}
 
   update(dt: number): void {
     this.flashTimer = Math.max(0, this.flashTimer - dt);
     this.body.alpha = this.flashTimer > 0 ? 0.6 : 1; // TODO(fx): proper white hit-flash
+    if (this.model) {
+      this.model.alpha = this.body.alpha;
+      this.model.tint = this.body.tint; // enraged tint in the last phase
+      this.model.animate(dt);
+    }
     if (this.isDead) return;
 
     if (this.restTimer > 0) {
@@ -90,15 +121,44 @@ export abstract class Boss extends Container {
       return;
     }
     const attacks = this.phase.attacks;
+    this.justStarted = this.attackTime === 0;
+    if (this.justStarted) {
+      this.count = 0;
+      this.startX = this.x;
+    }
     this.attackTime += dt;
     if (attacks[this.attackIndex](dt, this.attackTime)) {
       this.attackIndex = (this.attackIndex + 1) % attacks.length;
       this.attackTime = 0;
       this.restTimer = this.phase.restTime;
+      this.onAttackEnd();
     }
   }
 
   // ---- Helpers for writing attacks ----
+
+  /** Player's center point. */
+  get target(): { x: number; y: number } {
+    const h = this.player.hitbox;
+    return { x: h.x + h.w / 2, y: h.y + h.h / 2 };
+  }
+
+  /**
+   * Call `fn(i)` once every `interval` seconds (first call right away), `max` times in total.
+   * Returns true once all `max` calls have happened.
+   */
+  protected fireEvery(t: number, interval: number, max: number, fn: (i: number) => void): boolean {
+    const due = Math.min(max, Math.floor(t / interval) + 1);
+    while (this.count < due) fn(this.count++);
+    return this.count >= max;
+  }
+
+  /** Fire a bullet with gravity that lands on (toX, toY) after `time` seconds. */
+  lob(fromX: number, fromY: number, toX: number, toY: number, time: number, gravity: number, opts: Omit<BulletOptions, "gravity"> = {}): Bullet {
+    const vx = (toX - fromX) / time;
+    const vy = (toY - fromY - 0.5 * gravity * time * time) / time;
+    return this.bullets.spawn(fromX, fromY, vx, vy, { ...opts, gravity });
+  }
 
   /**
    * Fire a bullet aimed at the player's center.

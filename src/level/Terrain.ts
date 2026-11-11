@@ -14,6 +14,8 @@ export interface TerrainDef {
   floor: [number, number][];
   platforms: PlatformDef[];
   spikes: SpikeDef[];
+  /** Floor colours (body, top edge). Default COLORS.ground / COLORS.platformTop. */
+  colors?: { ground: number; top: number };
 }
 
 const SPIKE_H = 26;
@@ -31,8 +33,8 @@ export class Terrain extends Container {
     // TODO(art): ground tiles / parallax background
     const ground = new Graphics();
     for (const [l, r] of def.floor) {
-      ground.rect(l, GROUND_Y, r - l, GAME_HEIGHT - GROUND_Y).fill(COLORS.ground);
-      ground.rect(l, GROUND_Y, r - l, 6).fill(COLORS.platformTop);
+      ground.rect(l, GROUND_Y, r - l, GAME_HEIGHT - GROUND_Y).fill(def.colors?.ground ?? COLORS.ground);
+      ground.rect(l, GROUND_Y, r - l, 6).fill(def.colors?.top ?? COLORS.platformTop);
     }
     this.addChild(ground);
 

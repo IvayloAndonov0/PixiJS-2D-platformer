@@ -8,6 +8,7 @@ const SHEETS = {
   player: "assets/sprites/player.json",
   fx: "assets/sprites/fx_projectiles.json",
   super: "assets/sprites/fx_super.json",
+  eclipse: "assets/sprites/eclipse.json",
 } as const;
 
 const IMAGES = {
@@ -37,6 +38,11 @@ export function anim(sheet: SheetName, name: string): Texture[] {
   const frames = sheets[sheet]?.animations[name];
   if (!frames) throw new Error(`Animation "${name}" not found in sheet "${sheet}"`);
   return frames;
+}
+
+/** First frame of an animation, for single still sprites. */
+export function frame(sheet: SheetName, name: string): Texture {
+  return anim(sheet, name)[0];
 }
 
 export function image(name: ImageName): Texture {

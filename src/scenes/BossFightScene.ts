@@ -5,7 +5,7 @@ import type { Game } from "../core/Game";
 import { Scene } from "../core/Scene";
 import { Player } from "../entities/Player";
 import type { Boss } from "../entities/bosses/Boss";
-import { Background } from "../level/Background";
+import { Background, GROUND_COLORS } from "../level/Background";
 import { Terrain } from "../level/Terrain";
 import { BulletPool } from "../systems/BulletPool";
 import { Effects } from "../systems/Effects";
@@ -30,7 +30,7 @@ const CAMERA_LEAD = 0.35;
  */
 export class BossFightScene extends Scene {
   private world = new Container();
-  private background = new Background();
+  private background: Background;
   private playerBullets = new BulletPool("player");
   private bossBullets = new BulletPool("boss");
   private fx = new Effects();
@@ -67,15 +67,19 @@ export class BossFightScene extends Scene {
     super(game);
     const entry = BOSSES[bossIndex];
     const intro = skipIntro ? undefined : entry.intro;
+    const theme = entry.background ?? "hills";
+    this.background = new Background(theme);
 
     this.terrain = new Terrain({
       floor: [...(intro?.floor ?? []), [0, GAME_WIDTH]],
       platforms: [...(intro?.platforms ?? []), ...entry.platforms],
       spikes: intro?.spikes ?? [],
+      colors: GROUND_COLORS[theme],
     });
 
     this.player = new Player(game.input, this.playerBullets, this.terrain, this.fx);
     this.boss = entry.create(this.bossBullets, this.player);
+    this.boss.fx = this.fx;
     this.hud = new HUD(this.player, this.boss, game.input);
 
     // Signs along the parkour
@@ -137,6 +141,8 @@ export class BossFightScene extends Scene {
     if (this.locked && !over) this.elapsed += dt;
 
     this.terrain.update(dt);
+    this.fx.update(dt);
+    this.background.tick(dt);
     this.player.update(dt);
     if (this.locked) this.boss.update(dt); // boss sleeps until you enter the arena
     this.playerBullets.update(dt, this.cameraX);

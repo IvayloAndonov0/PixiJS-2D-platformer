@@ -1,0 +1,1284 @@
+{
+ "frames": {
+  "Pose5": {
+   "frame": {
+    "x": 2,
+    "y": 2,
+    "w": 340,
+    "h": 364
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 340,
+    "h": 364
+   },
+   "sourceSize": {
+    "w": 340,
+    "h": 364
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Pose4": {
+   "frame": {
+    "x": 344,
+    "y": 2,
+    "w": 282,
+    "h": 308
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 282,
+    "h": 308
+   },
+   "sourceSize": {
+    "w": 282,
+    "h": 308
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Pose2": {
+   "frame": {
+    "x": 628,
+    "y": 2,
+    "w": 257,
+    "h": 307
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 257,
+    "h": 307
+   },
+   "sourceSize": {
+    "w": 257,
+    "h": 307
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Pose3": {
+   "frame": {
+    "x": 887,
+    "y": 2,
+    "w": 227,
+    "h": 302
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 227,
+    "h": 302
+   },
+   "sourceSize": {
+    "w": 227,
+    "h": 302
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Pose1": {
+   "frame": {
+    "x": 1116,
+    "y": 2,
+    "w": 266,
+    "h": 300
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 266,
+    "h": 300
+   },
+   "sourceSize": {
+    "w": 266,
+    "h": 300
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Rift": {
+   "frame": {
+    "x": 1384,
+    "y": 2,
+    "w": 172,
+    "h": 174
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 172,
+    "h": 174
+   },
+   "sourceSize": {
+    "w": 172,
+    "h": 174
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "MeteorTall": {
+   "frame": {
+    "x": 1558,
+    "y": 2,
+    "w": 51,
+    "h": 167
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 51,
+    "h": 167
+   },
+   "sourceSize": {
+    "w": 51,
+    "h": 167
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Smoke2": {
+   "frame": {
+    "x": 1611,
+    "y": 2,
+    "w": 196,
+    "h": 149
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 196,
+    "h": 149
+   },
+   "sourceSize": {
+    "w": 196,
+    "h": 149
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Meteor1": {
+   "frame": {
+    "x": 1809,
+    "y": 2,
+    "w": 122,
+    "h": 148
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 122,
+    "h": 148
+   },
+   "sourceSize": {
+    "w": 122,
+    "h": 148
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Meteor2": {
+   "frame": {
+    "x": 1933,
+    "y": 2,
+    "w": 97,
+    "h": 136
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 97,
+    "h": 136
+   },
+   "sourceSize": {
+    "w": 97,
+    "h": 136
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Smoke1": {
+   "frame": {
+    "x": 2,
+    "y": 368,
+    "w": 156,
+    "h": 135
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 156,
+    "h": 135
+   },
+   "sourceSize": {
+    "w": 156,
+    "h": 135
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Meteor3": {
+   "frame": {
+    "x": 160,
+    "y": 368,
+    "w": 96,
+    "h": 132
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 96,
+    "h": 132
+   },
+   "sourceSize": {
+    "w": 96,
+    "h": 132
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "MeteorImpact": {
+   "frame": {
+    "x": 258,
+    "y": 368,
+    "w": 130,
+    "h": 131
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 130,
+    "h": 131
+   },
+   "sourceSize": {
+    "w": 130,
+    "h": 131
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Meteor4": {
+   "frame": {
+    "x": 390,
+    "y": 368,
+    "w": 53,
+    "h": 131
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 53,
+    "h": 131
+   },
+   "sourceSize": {
+    "w": 53,
+    "h": 131
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "BladeBig": {
+   "frame": {
+    "x": 445,
+    "y": 368,
+    "w": 138,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 138,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 138,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Flame": {
+   "frame": {
+    "x": 585,
+    "y": 368,
+    "w": 132,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 132,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 132,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Portal": {
+   "frame": {
+    "x": 719,
+    "y": 368,
+    "w": 198,
+    "h": 128
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 198,
+    "h": 128
+   },
+   "sourceSize": {
+    "w": 198,
+    "h": 128
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Eruption": {
+   "frame": {
+    "x": 919,
+    "y": 368,
+    "w": 198,
+    "h": 125
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 198,
+    "h": 125
+   },
+   "sourceSize": {
+    "w": 198,
+    "h": 125
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "BladeThin": {
+   "frame": {
+    "x": 1119,
+    "y": 368,
+    "w": 75,
+    "h": 124
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 124
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 124
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "SpikesWide": {
+   "frame": {
+    "x": 1196,
+    "y": 368,
+    "w": 218,
+    "h": 124
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 218,
+    "h": 124
+   },
+   "sourceSize": {
+    "w": 218,
+    "h": 124
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Spikes": {
+   "frame": {
+    "x": 1416,
+    "y": 368,
+    "w": 240,
+    "h": 123
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 240,
+    "h": 123
+   },
+   "sourceSize": {
+    "w": 240,
+    "h": 123
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 1.0
+   }
+  },
+  "Vortex": {
+   "frame": {
+    "x": 1658,
+    "y": 368,
+    "w": 197,
+    "h": 122
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 197,
+    "h": 122
+   },
+   "sourceSize": {
+    "w": 197,
+    "h": 122
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "BladeSwirl": {
+   "frame": {
+    "x": 1857,
+    "y": 368,
+    "w": 162,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 162,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 162,
+    "h": 120
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "BladeA": {
+   "frame": {
+    "x": 2,
+    "y": 505,
+    "w": 98,
+    "h": 118
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 98,
+    "h": 118
+   },
+   "sourceSize": {
+    "w": 98,
+    "h": 118
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "StarOrb": {
+   "frame": {
+    "x": 102,
+    "y": 505,
+    "w": 107,
+    "h": 116
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 107,
+    "h": 116
+   },
+   "sourceSize": {
+    "w": 107,
+    "h": 116
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "OrbHalo": {
+   "frame": {
+    "x": 211,
+    "y": 505,
+    "w": 104,
+    "h": 104
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 104
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 104
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "StarPurple": {
+   "frame": {
+    "x": 317,
+    "y": 505,
+    "w": 108,
+    "h": 100
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 108,
+    "h": 100
+   },
+   "sourceSize": {
+    "w": 108,
+    "h": 100
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "MeteorSmall": {
+   "frame": {
+    "x": 427,
+    "y": 505,
+    "w": 66,
+    "h": 100
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 66,
+    "h": 100
+   },
+   "sourceSize": {
+    "w": 66,
+    "h": 100
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Shard": {
+   "frame": {
+    "x": 495,
+    "y": 505,
+    "w": 48,
+    "h": 99
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 48,
+    "h": 99
+   },
+   "sourceSize": {
+    "w": 48,
+    "h": 99
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "CrescentA": {
+   "frame": {
+    "x": 545,
+    "y": 505,
+    "w": 66,
+    "h": 98
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 66,
+    "h": 98
+   },
+   "sourceSize": {
+    "w": 66,
+    "h": 98
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "OrbCrescent": {
+   "frame": {
+    "x": 613,
+    "y": 505,
+    "w": 107,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 107,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 107,
+    "h": 96
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "StarGold": {
+   "frame": {
+    "x": 722,
+    "y": 505,
+    "w": 119,
+    "h": 96
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 119,
+    "h": 96
+   },
+   "sourceSize": {
+    "w": 119,
+    "h": 96
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "OrbBig": {
+   "frame": {
+    "x": 843,
+    "y": 505,
+    "w": 109,
+    "h": 93
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 109,
+    "h": 93
+   },
+   "sourceSize": {
+    "w": 109,
+    "h": 93
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Star": {
+   "frame": {
+    "x": 954,
+    "y": 505,
+    "w": 61,
+    "h": 91
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 91
+   },
+   "sourceSize": {
+    "w": 61,
+    "h": 91
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "CrescentB": {
+   "frame": {
+    "x": 1017,
+    "y": 505,
+    "w": 67,
+    "h": 89
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 89
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 89
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Comet": {
+   "frame": {
+    "x": 1086,
+    "y": 505,
+    "w": 180,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 180,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 180,
+    "h": 82
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "OrbCracked": {
+   "frame": {
+    "x": 1268,
+    "y": 505,
+    "w": 52,
+    "h": 81
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 52,
+    "h": 81
+   },
+   "sourceSize": {
+    "w": 52,
+    "h": 81
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Spear": {
+   "frame": {
+    "x": 1322,
+    "y": 505,
+    "w": 306,
+    "h": 76
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 306,
+    "h": 76
+   },
+   "sourceSize": {
+    "w": 306,
+    "h": 76
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "RingOval": {
+   "frame": {
+    "x": 1630,
+    "y": 505,
+    "w": 126,
+    "h": 75
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 126,
+    "h": 75
+   },
+   "sourceSize": {
+    "w": 126,
+    "h": 75
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "CrescentSmall": {
+   "frame": {
+    "x": 1758,
+    "y": 505,
+    "w": 63,
+    "h": 73
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 63,
+    "h": 73
+   },
+   "sourceSize": {
+    "w": 63,
+    "h": 73
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "VoidOrb": {
+   "frame": {
+    "x": 1823,
+    "y": 505,
+    "w": 87,
+    "h": 73
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 87,
+    "h": 73
+   },
+   "sourceSize": {
+    "w": 87,
+    "h": 73
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "CrescentDash": {
+   "frame": {
+    "x": 1912,
+    "y": 505,
+    "w": 131,
+    "h": 71
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 131,
+    "h": 71
+   },
+   "sourceSize": {
+    "w": 131,
+    "h": 71
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "OrbSmall": {
+   "frame": {
+    "x": 2,
+    "y": 625,
+    "w": 78,
+    "h": 70
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 78,
+    "h": 70
+   },
+   "sourceSize": {
+    "w": 78,
+    "h": 70
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "OrbTiny": {
+   "frame": {
+    "x": 82,
+    "y": 625,
+    "w": 70,
+    "h": 65
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 70,
+    "h": 65
+   },
+   "sourceSize": {
+    "w": 70,
+    "h": 65
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Lance": {
+   "frame": {
+    "x": 154,
+    "y": 625,
+    "w": 284,
+    "h": 65
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 284,
+    "h": 65
+   },
+   "sourceSize": {
+    "w": 284,
+    "h": 65
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "VoidOrbSmall": {
+   "frame": {
+    "x": 440,
+    "y": 625,
+    "w": 103,
+    "h": 61
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 103,
+    "h": 61
+   },
+   "sourceSize": {
+    "w": 103,
+    "h": 61
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  },
+  "Bolt": {
+   "frame": {
+    "x": 545,
+    "y": 625,
+    "w": 182,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 182,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 182,
+    "h": 58
+   },
+   "anchor": {
+    "x": 0.5,
+    "y": 0.5
+   }
+  }
+ },
+ "animations": {
+  "Pose5": [
+   "Pose5"
+  ],
+  "Pose4": [
+   "Pose4"
+  ],
+  "Pose2": [
+   "Pose2"
+  ],
+  "Pose3": [
+   "Pose3"
+  ],
+  "Pose1": [
+   "Pose1"
+  ],
+  "Rift": [
+   "Rift"
+  ],
+  "MeteorTall": [
+   "MeteorTall"
+  ],
+  "Smoke2": [
+   "Smoke2"
+  ],
+  "Meteor1": [
+   "Meteor1"
+  ],
+  "Meteor2": [
+   "Meteor2"
+  ],
+  "Smoke1": [
+   "Smoke1"
+  ],
+  "Meteor3": [
+   "Meteor3"
+  ],
+  "MeteorImpact": [
+   "MeteorImpact"
+  ],
+  "Meteor4": [
+   "Meteor4"
+  ],
+  "BladeBig": [
+   "BladeBig"
+  ],
+  "Flame": [
+   "Flame"
+  ],
+  "Portal": [
+   "Portal"
+  ],
+  "Eruption": [
+   "Eruption"
+  ],
+  "BladeThin": [
+   "BladeThin"
+  ],
+  "SpikesWide": [
+   "SpikesWide"
+  ],
+  "Spikes": [
+   "Spikes"
+  ],
+  "Vortex": [
+   "Vortex"
+  ],
+  "BladeSwirl": [
+   "BladeSwirl"
+  ],
+  "BladeA": [
+   "BladeA"
+  ],
+  "StarOrb": [
+   "StarOrb"
+  ],
+  "OrbHalo": [
+   "OrbHalo"
+  ],
+  "StarPurple": [
+   "StarPurple"
+  ],
+  "MeteorSmall": [
+   "MeteorSmall"
+  ],
+  "Shard": [
+   "Shard"
+  ],
+  "CrescentA": [
+   "CrescentA"
+  ],
+  "OrbCrescent": [
+   "OrbCrescent"
+  ],
+  "StarGold": [
+   "StarGold"
+  ],
+  "OrbBig": [
+   "OrbBig"
+  ],
+  "Star": [
+   "Star"
+  ],
+  "CrescentB": [
+   "CrescentB"
+  ],
+  "Comet": [
+   "Comet"
+  ],
+  "OrbCracked": [
+   "OrbCracked"
+  ],
+  "Spear": [
+   "Spear"
+  ],
+  "RingOval": [
+   "RingOval"
+  ],
+  "CrescentSmall": [
+   "CrescentSmall"
+  ],
+  "VoidOrb": [
+   "VoidOrb"
+  ],
+  "CrescentDash": [
+   "CrescentDash"
+  ],
+  "OrbSmall": [
+   "OrbSmall"
+  ],
+  "OrbTiny": [
+   "OrbTiny"
+  ],
+  "Lance": [
+   "Lance"
+  ],
+  "VoidOrbSmall": [
+   "VoidOrbSmall"
+  ],
+  "Bolt": [
+   "Bolt"
+  ]
+ },
+ "meta": {
+  "image": "eclipse.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 2048,
+   "h": 697
+  },
+  "scale": "1"
+ }
+}

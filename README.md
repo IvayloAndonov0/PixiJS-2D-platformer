@@ -63,6 +63,16 @@ src/
     bosses/
       Boss.ts             base class: HP, phases, attack scheduler, shooting helpers
       ExampleBoss.ts      template boss with 3 phases
+      StormCrow.ts        flying: feather fans, rain, dive-bombs, lightning strikes, tornadoes
+      IronGolem.ts        ground: shockwaves, lobbed boulders, floor eruptions, rocket fist, rockfall
+      HexWizard.ts        teleporter: spirals, orbs, rune walls with a gap, homing wisps, rune traps
+      EclipseHeart.ts     final boss (sprite art): rings, beam, meteors, lances, blades, spikes, vortex
+      art/
+        BossModel.ts      base for bosses drawn in code: a rig of parts eased toward a `pose`
+        CrowModel.ts      animated models (wings flap, arms swing, staff raises...)
+        GolemModel.ts
+        WizardModel.ts
+        projectiles.ts    projectile shapes drawn in code (shared GraphicsContext per shape)
   systems/
     BulletPool.ts         spawns/culls bullets
     collision.ts          rect/circle overlap
@@ -70,9 +80,9 @@ src/
     HUD.ts                player HP + boss health bar
   assets.ts               loads spritesheets + images; anim("player", "Run"), image("hills")
   level/
-    parkour.ts            the parkour run before the arena (floor spans, platforms, spikes, signs)
+    parkour.ts            the parkour runs before each arena (PARKOUR_1..5: floor spans, platforms, spikes, signs)
     Terrain.ts            floor/pits, one-way + moving platforms, spikes
-    Background.ts         sky gradient + parallax hills
+    Background.ts         per-level backgrounds (hills, storm, quarry, arcane, eclipse): parallax layers + weather
   systems/Effects.ts      one-shot effects (sparks, smoke, parry ring, super circle)
 public/assets/
   sprites/                PNG sheets + generated .json spritesheets
@@ -104,6 +114,7 @@ Set `DEBUG_HITBOXES = true` in `config.ts` to draw hitboxes.
 | `player.png` | 144px grid, 18×4 | Idle, Walk, Run, Dash, JumpStart/JumpRise/JumpFall/Land, Crouch, Shoot, Hurt, Death, Ghost |
 | `fx_projectiles.png` | free strip, auto-detected | Bullet, Card (player shot), Spark (hit), Ring (parry), Smoke |
 | `fx_super.png` | free strip, auto-detected | SuperCircle, SuperSmoke, Vortex (special projectile), CardFan |
+| `eclipse.png` | cut from `art/eclipse_heart_sheet.png` by hand-picked boxes (`ECLIPSE_SPRITES` in the script), haze removed | Eclipse Heart poses, projectiles, ground effects (each a 1-frame animation) |
 
 When the artist updates a sheet:
 
@@ -117,15 +128,22 @@ feet (measured automatically), so switching animations doesn't make the sprite j
 If you add frames or animations, edit `PLAYER_ROWS` / `PLAYER_ANIMS` or the strip groups at the bottom of the script.
 Export **PNG with transparency**. JPG has no alpha, so you'd get a dark box around the character.
 
-Still needed from art: **parry** frames (currently a tint) and **boss** sprites.
+Still needed from art: **parry** frames (currently a tint) and sprites for the other bosses.
+Sprite bullets that are parryable get a green tint + white ring automatically, so the parry colour rule still holds.
 
 ## Making a new boss
 
 1. Copy `src/entities/bosses/ExampleBoss.ts` to `MyBoss.ts` and rename the class.
 2. Write attacks. An attack is a function `(dt, t) => boolean`: it runs every frame, `t` is the number of seconds since it started, and it returns `true` when it's done.
-   Use the helpers `this.shootAtPlayer(...)` and `this.shootRing(...)`, or call `this.bullets.spawn(x, y, vx, vy)` directly.
+   Use the helpers `this.shootAtPlayer(...)`, `this.shootRing(...)`, `this.lob(...)` (gravity arc onto a spot) and
+   `this.fireEvery(t, interval, max, fn)` (timed volleys), or call `this.bullets.spawn(x, y, vx, vy, { gravity })` directly.
+   `this.justStarted`, `this.startX` and `this.count` are reset each time an attack begins.
 3. List phases with `untilHpFraction` (for example `0.6` means "switch to the next phase at 60% HP").
-4. Register it in `src/bosses.ts` with its arena platforms (`{ x, y, w }` list, or `[]` for a flat arena). It appears on the title screen automatically.
+4. Register it in `src/bosses.ts` with its arena platforms (`{ x, y, w }` list, or `[]` for a flat arena), an optional parkour `intro` and `sky` colors.
+5. Optional art: draw a model in `entities/bosses/art/` (extend `BossModel`, call `this.useModel(...)`) and give bullets
+   a look with `shape: { ctx: MY_SHAPE() }` (drawn in code) or `sprite: {...}` (from a spritesheet).
+   Parryable bullets with a shape or sprite are tinted green with a white ring automatically.
+6. Give it a node on the map in `src/level/overworld.ts` (`MAP_NODES` + a path in `MAP_PATHS`).
 
 ## Suggested team split
 
