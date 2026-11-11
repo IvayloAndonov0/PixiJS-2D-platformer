@@ -43,6 +43,8 @@ export class Player extends Container {
   crouching = false;
   /** Super meter, 0..SUPER.max */
   meter = 0;
+  /** Supers fired this fight (counts toward the grade). */
+  supersUsed = 0;
 
   private sprite: AnimatedSprite;
   private currentAnim?: AnimName;
@@ -235,7 +237,10 @@ export class Player extends Container {
     const terrain = this.terrain;
 
     // Inside a pit: the pit walls are solid, don't slide into the floor from the side.
-    if (this.y > GROUND_Y + 2 && terrain?.floorUnder(this.x, footHalf)) this.x = prevX;
+    // Check where we were at the start of the frame (prevY), not after gravity: while standing
+    // on the floor, gravity nudges y a few px below GROUND_Y each frame before the landing snap,
+    // and on slower frames that nudge passed the threshold and cancelled the horizontal step.
+    if (prevY > GROUND_Y + 2 && terrain?.floorUnder(this.x, footHalf)) this.x = prevX;
 
     this.dropTimer = Math.max(0, this.dropTimer - dt);
     if (this.dropTimer === 0) this.droppingThrough = null;
@@ -419,6 +424,7 @@ export class Player extends Container {
 
   private fireSpecial(): void {
     this.meter = 0;
+    this.supersUsed++;
     this.invulnTimer = Math.max(this.invulnTimer, SUPER.invulnTime);
     this.fx?.spawn("super", "SuperCircle", this.x, this.y, { scale: 0.9, fps: 14 });
     const { x, y } = this.muzzle();

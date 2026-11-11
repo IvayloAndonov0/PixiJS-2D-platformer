@@ -13,7 +13,7 @@ import { circleRect, rectsOverlap } from "../systems/collision";
 import { HUD } from "../ui/HUD";
 import { MenuList } from "../ui/MenuList";
 import { ResultScene } from "./ResultScene";
-import { TitleScene } from "./TitleScene";
+import { MapScene } from "./MapScene";
 
 /** Player x that triggers the arena lock (the arena spans x 0..GAME_WIDTH). */
 const ARENA_LOCK_X = 140;
@@ -51,6 +51,8 @@ export class BossFightScene extends Scene {
   private bannerTimer = 0;
   private elapsed = 0;
   private endTimer = 0;
+  /** Successful parries this fight (counts toward the grade). */
+  private parries = 0;
   /** Seconds of remaining hit-stop (gameplay frozen). */
   private hitStop = 0;
   /** Full-screen white flash for parries / death. */
@@ -116,7 +118,7 @@ export class BossFightScene extends Scene {
     const input = this.game.input;
     if (input.wasPressed("pause") && this.endTimer === 0) this.setPaused(!this.paused);
     if (this.paused) {
-      if (input.menuPressed("clear")) this.quitToTitle();
+      if (input.menuPressed("clear")) this.quitToMap();
       else this.pauseMenu.update(input);
       return;
     }
@@ -154,7 +156,19 @@ export class BossFightScene extends Scene {
       this.endTimer += dt;
       const done = this.player.isDead ? this.player.deathFinished : this.endTimer > 1.5;
       if (done) {
-        this.game.changeScene(new ResultScene(this.game, !this.player.isDead, this.elapsed, this.bossIndex));
+        const won = !this.player.isDead;
+        this.game.changeScene(
+          new ResultScene(this.game, this.bossIndex, {
+            won,
+            time: this.elapsed,
+            hpLeft: this.player.hp,
+            maxHp: PLAYER.maxHp,
+            parries: this.parries,
+            supers: this.player.supersUsed,
+            bossDamage: won ? 1 : 1 - Math.max(0, this.boss.hp) / this.boss.maxHp,
+            parTime: BOSSES[this.bossIndex].parTime ?? 90,
+          }),
+        );
       }
     }
   }
@@ -251,6 +265,7 @@ export class BossFightScene extends Scene {
       if (b.parryable && this.player.isParrying && circleRect(b.hitbox, parryBox)) {
         b.dead = true;
         this.player.onParry();
+        this.parries++;
         this.freeze(PLAYER.parryFreeze, 0.35);
         this.fx.spawn("fx", "Ring", b.x, b.y, { fps: 12 });
         continue;
@@ -275,7 +290,7 @@ export class BossFightScene extends Scene {
     title.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 120);
     this.pauseMenu = new MenuList([
       { label: "Resume", onSelect: () => this.setPaused(false) },
-      { label: "Quit to title", onSelect: () => this.quitToTitle() },
+      { label: "Quit to map", onSelect: () => this.quitToMap() },
     ]);
     this.pauseMenu.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
     this.pauseHint = new Text({ text: "", style: { fill: COLORS.text, fontSize: 18, align: "center" } });
@@ -294,7 +309,7 @@ export class BossFightScene extends Scene {
     }
   }
 
-  private quitToTitle(): void {
-    this.game.changeScene(new TitleScene(this.game));
+  private quitToMap(): void {
+    this.game.changeScene(new MapScene(this.game));
   }
 }

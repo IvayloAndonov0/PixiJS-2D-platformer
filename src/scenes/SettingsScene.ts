@@ -1,6 +1,7 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { ACTION_LABELS, ACTIONS, SLOTS, codeLabel } from "../core/Input";
+import type { Game } from "../core/Game";
 import { Scene } from "../core/Scene";
 import { TitleScene } from "./TitleScene";
 
@@ -27,6 +28,14 @@ export class SettingsScene extends Scene {
   private resetBtn = this.makeButton("Reset to defaults", GAME_WIDTH / 2 - 160);
   private backBtn = this.makeButton("Back", GAME_WIDTH / 2 + 160);
   private hint = new Text({ text: "", style: { fill: COLORS.text, fontSize: 18, align: "center" } });
+
+  constructor(
+    game: Game,
+    /** Scene to return to (default: title screen). */
+    private back: () => Scene = () => new TitleScene(game),
+  ) {
+    super(game);
+  }
 
   private get rowCount(): number {
     return ACTIONS.length + 2;
@@ -132,7 +141,7 @@ export class SettingsScene extends Scene {
   }
 
   private goBack(): void {
-    this.game.changeScene(new TitleScene(this.game));
+    this.game.changeScene(this.back());
   }
 
   private redraw(): void {
