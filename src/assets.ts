@@ -13,6 +13,16 @@ const SHEETS = {
 const IMAGES = {
   hills: "assets/backgrounds/hills.png",
   tree1: "assets/sprites/trees/Tree1.png",
+  bushBlueFlowers: "assets/sprites/bushes/Bush_blue_flowers1.png",
+  bushRedFlowers: "assets/sprites/bushes/Bush_red_flowers1.png",
+  bushSimple1: "assets/sprites/bushes/Bush_simple1_1.png",
+  bushSimple2: "assets/sprites/bushes/Bush_simple2_1.png",
+  fern1: "assets/sprites/bushes/Fern1_1.png",
+  fern2: "assets/sprites/bushes/Fern2_1.png",
+  rock1: "assets/sprites/rocks/Rock1_1.png",
+  rock2: "assets/sprites/rocks/Rock2_grass_shadow_dark1.png",
+  rock4: "assets/sprites/rocks/Rock4_1.png",
+  rock5: "assets/sprites/rocks/Rock5_1.png",
 } as const;
 
 export type SheetName = keyof typeof SHEETS;
