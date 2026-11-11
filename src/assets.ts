@@ -12,6 +12,7 @@ const SHEETS = {
 
 const IMAGES = {
   hills: "assets/backgrounds/hills.png",
+  tree1: "assets/sprites/trees/Tree1.png",
 } as const;
 
 export type SheetName = keyof typeof SHEETS;
