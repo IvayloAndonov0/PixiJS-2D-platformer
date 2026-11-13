@@ -39,6 +39,26 @@ interface Still {
  */
 export class Effects extends Container {
   private stills: Still[] = [];
+  private shakeLeft = 0;
+  private shakeTotal = 0;
+  private shakeMag = 0;
+  /** Current screen-shake offset in px; the scene applies it. Updated by tickShake(). */
+  shakeX = 0;
+  shakeY = 0;
+
+  /** Shake the screen: `magnitude` px at the start, fading out over `seconds`. */
+  shake(magnitude: number, seconds: number): void {
+    this.shakeMag = Math.max(this.shakeMag * (this.shakeLeft / (this.shakeTotal || 1)), magnitude);
+    this.shakeLeft = this.shakeTotal = seconds;
+  }
+
+  /** Call every frame (even during hit-stop) so the shake always settles. */
+  tickShake(dt: number): void {
+    this.shakeLeft = Math.max(0, this.shakeLeft - dt);
+    const k = this.shakeTotal > 0 ? this.shakeLeft / this.shakeTotal : 0;
+    this.shakeX = (Math.random() * 2 - 1) * this.shakeMag * k;
+    this.shakeY = (Math.random() * 2 - 1) * this.shakeMag * k;
+  }
 
   still(texture: Texture, x: number, y: number, opts: StillOptions): Sprite {
     return this.stillView(new Sprite(texture), x, y, opts); // anchor comes from the spritesheet

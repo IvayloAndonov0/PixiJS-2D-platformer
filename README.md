@@ -78,15 +78,17 @@ src/
     collision.ts          rect/circle overlap
   ui/
     HUD.ts                player HP + boss health bar
+  audio.ts                music (one looping track) + one-shot SFX; MUSIC / SFX file lists
   assets.ts               loads spritesheets + images; anim("player", "Run"), image("hills")
   level/
     parkour.ts            the parkour runs before each arena (PARKOUR_1..5: floor spans, platforms, spikes, signs)
     Terrain.ts            floor/pits, one-way + moving platforms, spikes
     Background.ts         per-level backgrounds (hills, storm, quarry, arcane, eclipse): parallax layers + weather
-  systems/Effects.ts      one-shot effects (sparks, smoke, parry ring, super circle)
+  systems/Effects.ts      one-shot effects (sparks, smoke, parry ring, super circle) + screen shake
 public/assets/
   sprites/                PNG sheets + generated .json spritesheets
-  audio/  fonts/
+  audio/                  Map/, Example Boss/ (Parkour, Boss), Player Sounds/ (Swoosh, Hurt, Death)
+  fonts/
 tools/
   build_spritesheets.py   regenerates the sprite .json files from the PNGs
 ```
@@ -106,6 +108,20 @@ the camera locks on the arena, the boss HUD appears and the boss wakes up. There
 Falling into a pit costs 1 HP and launches you back up out of it (keeping your momentum) with brief i-frames. Spikes hurt on touch.
 Edit `src/level/parkour.ts` to change the course. Reach: full jump ≈ 155px up / 250px across, jump + dash ≈ 400px across.
 Set `DEBUG_HITBOXES = true` in `config.ts` to draw hitboxes.
+
+## Audio
+
+`src/audio.ts` has the file lists and two kinds of playback:
+
+- **Music**: `playMusic(file)` loops one track at a time (asking for the track already playing does nothing); `stopMusic()` stops it.
+  The map plays `MUSIC.map`. Each boss can set `music: { parkour, boss }` in `src/bosses.ts`: the parkour track plays
+  until the gate drops, then the boss track. Leaving a fight stops the music.
+- **SFX**: `playSfx(file, volume, maxSeconds)` plays a one-shot; `maxSeconds` cuts it off with a short fade.
+  Player sounds: dash plays `Swoosh`, getting hurt plays `Hurt` (with a small screen shake via `Effects.shake()`),
+  menu buttons (`MenuList`, mouse click or Enter) play the UI click; dying stops the music and plays `Death` for 8 seconds, fading out, over the results screen until the player presses a key / clicks or leaves it (`stopSfx()`).
+
+Browsers block audio until the first click or key press, so a blocked track starts on the first input.
+To add a track, drop the file in `public/assets/audio/` and add it to `MUSIC` or `SFX`.
 
 ## Art pipeline
 

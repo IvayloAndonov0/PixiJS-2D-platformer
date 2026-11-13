@@ -1,4 +1,5 @@
 import { Container, Graphics, Text } from "pixi.js";
+import { playMusic, stopMusic } from "../audio";
 import { BOSSES } from "../bosses";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, GROUND_Y, PLAYER, SUPER } from "../config";
 import type { Game } from "../core/Game";
@@ -118,6 +119,24 @@ export class BossFightScene extends Scene {
     this.applyCamera();
   }
 
+  override enter(): void {
+    // Parkour music until the arena locks (lockArena switches to the boss track). No intro = straight to boss music.
+    const music = BOSSES[this.bossIndex].music;
+    if (this.locked) this.playBossMusic();
+    else if (music?.parkour) playMusic(music.parkour);
+    else stopMusic();
+  }
+
+  override exit(): void {
+    stopMusic();
+  }
+
+  private playBossMusic(): void {
+    const boss = BOSSES[this.bossIndex].music?.boss;
+    if (boss) playMusic(boss);
+    else stopMusic();
+  }
+
   update(dt: number): void {
     const input = this.game.input;
     if (input.wasPressed("pause") && this.endTimer === 0) this.setPaused(!this.paused);
@@ -126,6 +145,9 @@ export class BossFightScene extends Scene {
       else this.pauseMenu.update(input);
       return;
     }
+
+    this.fx.tickShake(dt);
+    this.position.set(Math.round(this.fx.shakeX), Math.round(this.fx.shakeY));
 
     // Screen flash fades in real time, even during hit-stop.
     this.flash.alpha = Math.max(0, this.flash.alpha - dt * 4);
@@ -188,6 +210,7 @@ export class BossFightScene extends Scene {
     this.gate.visible = true;
     this.gateDrop = instant ? 1 : 0;
     this.hud.showBoss = true;
+    this.playBossMusic();
     if (!instant) {
       this.bannerTimer = 1.6;
       this.fx.spawn("fx", "Smoke", 0, GROUND_Y - 20, { scale: 1.2 });

@@ -1,3 +1,4 @@
+import { SFX, stopSfx } from "../audio";
 import { Container, Graphics, Text } from "pixi.js";
 import { BOSSES } from "../bosses";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
@@ -53,7 +54,12 @@ export class ResultScene extends Scene {
     super(game);
   }
 
+  /** Any key / click on this screen cuts the death sound short. */
+  private stopDeathSound = () => stopSfx(SFX.death);
+
   override enter(): void {
+    window.addEventListener("keydown", this.stopDeathSound);
+    window.addEventListener("pointerdown", this.stopDeathSound);
     const r = this.result;
     const improved = recordResult(BOSSES[this.bossIndex].name, r);
 
@@ -69,6 +75,12 @@ export class ResultScene extends Scene {
     else this.buildLoss(improved);
     this.addChild(this.menu, this.hint);
     this.setDone(!r.won);
+  }
+
+  override exit(): void {
+    window.removeEventListener("keydown", this.stopDeathSound);
+    window.removeEventListener("pointerdown", this.stopDeathSound);
+    stopSfx(SFX.death);
   }
 
   update(dt: number): void {

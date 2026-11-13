@@ -1,3 +1,4 @@
+import { playSfx, SFX, stopMusic } from "../audio";
 import { AnimatedSprite, Container, Graphics } from "pixi.js";
 import { anim } from "../assets";
 import { BULLET, COLORS, DEBUG_HITBOXES, GAME_HEIGHT, GAME_WIDTH, GROUND_Y, PLAYER, SUPER } from "../config";
@@ -146,8 +147,9 @@ export class Player extends Container {
     this.hp = Math.max(0, this.hp - 1);
     this.invulnTimer = PLAYER.invulnTime;
     this.hurtTimer = 0.25;
+    this.fx?.shake(this.isDead ? 12 : 8, 0.25);
     if (this.isDead) this.startDeath();
-    // TODO(audio): hit sound   TODO(fx): screen shake
+    else playSfx(SFX.hurt);
   }
 
   /** Called by the fight scene when a parryable bullet touches the parry box. */
@@ -193,6 +195,7 @@ export class Player extends Container {
     if (input.wasPressed("dash") && this.dashCooldown === 0) {
       this.dashTimer = PLAYER.dashDuration;
       this.dashCooldown = PLAYER.dashCooldown;
+      playSfx(SFX.swoosh);
       this.crouching = false;
       this.fx?.spawn("fx", "Smoke", this.x - this.facing * 30, this.y - 20, { scale: 0.6 });
     }
@@ -342,7 +345,8 @@ export class Player extends Container {
     this.vy = -700;
     this.onGround = false;
     this.play("Death");
-    // TODO(audio): death sound
+    stopMusic();
+    playSfx(SFX.death, 0.99, 8); // keeps playing over the results screen
   }
 
   /** Knocked back -> falls and lies on the floor -> ghost floats up and fades out. */

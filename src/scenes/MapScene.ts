@@ -1,4 +1,5 @@
 import { AnimatedSprite, Container, Graphics, Sprite, Text, type FederatedPointerEvent } from "pixi.js";
+import { MUSIC, playMusic } from "../audio";
 import { anim, image, type ImageName } from "../assets";
 import { BOSSES } from "../bosses";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
@@ -112,6 +113,7 @@ export class MapScene extends Scene {
   private toastTimer = 0;
 
   override enter(): void {
+    playMusic(MUSIC.map);
     const rand = mulberry32(7);
     this.world.addChild(this.drawGround(rand), this.drawPaths(), this.drawLake(), this.objects);
     this.objects.sortableChildren = true;

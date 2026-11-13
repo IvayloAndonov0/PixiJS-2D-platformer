@@ -7,6 +7,7 @@ import { ExampleBoss } from "./entities/bosses/ExampleBoss";
 import { HEX_PLATFORMS, HexWizard } from "./entities/bosses/HexWizard";
 import { IronGolem } from "./entities/bosses/IronGolem";
 import { StormCrow } from "./entities/bosses/StormCrow";
+import { MUSIC } from "./audio";
 import type { BackgroundTheme } from "./level/Background";
 import { PARKOUR_1, PARKOUR_2, PARKOUR_3, PARKOUR_4, PARKOUR_5, type IntroDef } from "./level/parkour";
 import type { BulletPool } from "./systems/BulletPool";
@@ -24,11 +25,19 @@ export interface BossEntry {
   intro?: IntroDef;
   /** Scenery behind the level (also sets the floor colour). Default "hills". */
   background?: BackgroundTheme;
+  /** Music files (see MUSIC in audio.ts). `parkour` plays until the arena locks, then `boss`. Omit for silence. */
+  music?: { parkour?: string; boss?: string };
 }
 
 /** Every fightable boss, in order. Add yours here, then give it a spot on the map in level/overworld.ts. */
 export const BOSSES: BossEntry[] = [
-  { name: "Example Boss", create: (b, p) => new ExampleBoss(b, p), platforms: DEFAULT_PLATFORMS, intro: PARKOUR_1, background: "hills" },
+  {
+    name: "Example Boss",
+    create: (b, p) => new ExampleBoss(b, p), 
+    platforms: DEFAULT_PLATFORMS, intro: PARKOUR_1,
+    background: "hills",
+    music: { parkour: MUSIC.exampleParkour, boss: MUSIC.exampleBoss },
+  },
   {
     name: "Storm Crow",
     create: (b, p) => new StormCrow(b, p),

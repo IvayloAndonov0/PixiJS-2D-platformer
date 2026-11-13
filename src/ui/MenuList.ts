@@ -1,4 +1,5 @@
 import { Container, Graphics, Text } from "pixi.js";
+import { playSfx, SFX } from "../audio";
 import { COLORS } from "../config";
 import type { Input } from "../core/Input";
 
@@ -52,6 +53,7 @@ export class MenuList extends Container {
       });
       btn.on("pointertap", () => {
         this.selected = i;
+        playSfx(SFX.uiClick, 0.1);
         item.onSelect();
       });
       this.addChild(btn);
@@ -67,6 +69,7 @@ export class MenuList extends Container {
     if (input.menuPressed("down")) this.selected = (this.selected + 1) % n;
     this.redraw();
     if (input.menuPressed("confirm")) {
+      playSfx(SFX.uiClick);
       this.items[this.selected].onSelect();
       return true;
     }
