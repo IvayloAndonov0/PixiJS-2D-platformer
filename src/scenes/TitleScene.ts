@@ -1,9 +1,12 @@
 import { Text } from "pixi.js";
+import { isMusicEnabled, setMusicEnabled } from "../audio";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { Scene } from "../core/Scene";
 import { MenuList } from "../ui/MenuList";
 import { FileSelectScene } from "./FileSelectScene";
 import { SettingsScene } from "./SettingsScene";
+
+const musicLabel = () => `Music: ${isMusicEnabled() ? "On" : "Off"}`;
 
 /** Title: Play (-> file select -> overworld map) and Settings. TODO(ui): real logo, menu art, music. */
 export class TitleScene extends Scene {
@@ -24,6 +27,13 @@ export class TitleScene extends Scene {
     this.menu = new MenuList([
       { label: "Play", onSelect: () => this.game.changeScene(new FileSelectScene(this.game)) },
       { label: "Settings", onSelect: () => this.game.changeScene(new SettingsScene(this.game)) },
+      {
+        label: musicLabel(),
+        onSelect: () => {
+          setMusicEnabled(!isMusicEnabled());
+          this.menu.setLabel(2, musicLabel());
+        },
+      },
     ]);
     this.menu.position.set(GAME_WIDTH / 2, 300);
 

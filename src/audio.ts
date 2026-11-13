@@ -17,6 +17,35 @@ export type MusicKey = keyof typeof MUSIC;
 
 let current: HTMLAudioElement | undefined;
 let currentFile: string | undefined;
+/** The track scenes last asked for; resumed if music is switched back on. */
+let wantedFile: string | undefined;
+
+const MUSIC_PREF_KEY = "boss-rush.music.v1";
+let musicEnabled = loadMusicEnabled();
+
+function loadMusicEnabled(): boolean {
+  try {
+    return localStorage.getItem(MUSIC_PREF_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function isMusicEnabled(): boolean {
+  return musicEnabled;
+}
+
+/** Turn background music on/off (remembered between sessions). Sound effects are unaffected. */
+export function setMusicEnabled(on: boolean): void {
+  musicEnabled = on;
+  try {
+    localStorage.setItem(MUSIC_PREF_KEY, on ? "on" : "off");
+  } catch {
+    // Storage blocked — the setting just won't persist.
+  }
+  if (!on) haltMusic();
+  else if (wantedFile) playMusic(wantedFile);
+}
 
 function startWhenAllowed(audio: HTMLAudioElement): void {
   audio.play().catch(() => {
@@ -32,8 +61,9 @@ function startWhenAllowed(audio: HTMLAudioElement): void {
 
 /** Loop `file` (a path relative to assets/audio, or a MUSIC key's value). Does nothing if it is already playing. */
 export function playMusic(file: string): void {
-  if (currentFile === file) return;
-  stopMusic();
+  wantedFile = file;
+  if (!musicEnabled || currentFile === file) return;
+  haltMusic();
   const audio = new Audio(encodeURI(`${MUSIC_DIR}/${file}`));
   audio.loop = true;
   audio.volume = VOLUME;
@@ -43,6 +73,11 @@ export function playMusic(file: string): void {
 }
 
 export function stopMusic(): void {
+  wantedFile = undefined;
+  haltMusic();
+}
+
+function haltMusic(): void {
   current?.pause();
   current = undefined;
   currentFile = undefined;

@@ -1,4 +1,5 @@
 import { Container, Graphics, Text } from "pixi.js";
+import { isMusicEnabled, setMusicEnabled } from "../audio";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { ACTION_LABELS, ACTIONS, SLOTS, codeLabel } from "../core/Input";
 import type { Game } from "../core/Game";
@@ -10,6 +11,7 @@ const TOP = 120;
 const LABEL_X = 260;
 const SLOT_X = [620, 880];
 const SLOT_W = 230;
+const BTN_W = 250;
 
 /**
  * Key-binding settings.
@@ -18,15 +20,16 @@ const SLOT_W = 230;
  * Rebinding accepts any key or mouse button; Esc cancels.
  */
 export class SettingsScene extends Scene {
-  private row = 0; // 0..ACTIONS.length-1 = actions, ACTIONS.length = "Reset", +1 = "Back"
+  private row = 0; // 0..ACTIONS.length-1 = actions, ACTIONS.length = "Reset", +1 = "Music", +2 = "Back"
   private col = 0;
   private capturing = false;
   /** Rebind requested by a mouse click; armed next frame so that click isn't captured as the binding. */
   private pendingCapture?: { row: number; col: number };
 
   private cells: { bg: Graphics; text: Text }[][] = [];
-  private resetBtn = this.makeButton("Reset to defaults", GAME_WIDTH / 2 - 160);
-  private backBtn = this.makeButton("Back", GAME_WIDTH / 2 + 160);
+  private resetBtn = this.makeButton("Reset to defaults", GAME_WIDTH / 2 - 270);
+  private musicBtn = this.makeButton(this.musicLabel(), GAME_WIDTH / 2);
+  private backBtn = this.makeButton("Back", GAME_WIDTH / 2 + 270);
   private hint = new Text({ text: "", style: { fill: COLORS.text, fontSize: 18, align: "center" } });
 
   constructor(
@@ -38,7 +41,7 @@ export class SettingsScene extends Scene {
   }
 
   private get rowCount(): number {
-    return ACTIONS.length + 2;
+    return ACTIONS.length + 3;
   }
 
   override enter(): void {
@@ -83,6 +86,7 @@ export class SettingsScene extends Scene {
     });
 
     this.onClick(this.resetBtn.container, () => this.game.input.resetToDefaults());
+    this.onClick(this.musicBtn.container, () => this.toggleMusic());
     this.onClick(this.backBtn.container, () => this.goBack());
 
     this.hint.anchor.set(0.5, 1);
@@ -110,6 +114,7 @@ export class SettingsScene extends Scene {
         else if (input.menuPressed("clear")) input.bind(ACTIONS[this.row], this.col, null);
       } else if (input.menuPressed("confirm")) {
         if (this.row === ACTIONS.length) input.resetToDefaults();
+        else if (this.row === ACTIONS.length + 1) this.toggleMusic();
         else return this.goBack();
       }
     }
@@ -140,6 +145,15 @@ export class SettingsScene extends Scene {
     });
   }
 
+  private musicLabel(): string {
+    return `Music: ${isMusicEnabled() ? "On" : "Off"}`;
+  }
+
+  private toggleMusic(): void {
+    setMusicEnabled(!isMusicEnabled());
+    this.musicBtn.setLabel(this.musicLabel());
+  }
+
   private goBack(): void {
     this.game.changeScene(this.back());
   }
@@ -161,7 +175,8 @@ export class SettingsScene extends Scene {
     });
 
     this.resetBtn.draw(this.row === ACTIONS.length);
-    this.backBtn.draw(this.row === ACTIONS.length + 1);
+    this.musicBtn.draw(this.row === ACTIONS.length + 1);
+    this.backBtn.draw(this.row === ACTIONS.length + 2);
 
     this.hint.text = this.capturing
       ? "Press any key or mouse button to bind it.  Esc to cancel."
@@ -171,21 +186,22 @@ export class SettingsScene extends Scene {
 
   private makeButton(label: string, centerX: number) {
     const container = new Container();
-    container.position.set(centerX - 140, TOP + ACTIONS.length * ROW_H + 24);
+    container.position.set(centerX - BTN_W / 2, TOP + ACTIONS.length * ROW_H + 24);
     container.eventMode = "static";
     container.cursor = "pointer";
     const bg = new Graphics();
     const text = new Text({ text: label, style: { fill: COLORS.text, fontSize: 22 } });
     text.anchor.set(0.5);
-    text.position.set(140, 22);
+    text.position.set(BTN_W / 2, 22);
     container.addChild(bg, text);
     this.addChild(container);
     return {
       container,
+      setLabel: (label: string) => (text.text = label),
       draw: (selected: boolean) =>
         bg
           .clear()
-          .roundRect(0, 0, 280, 44, 10)
+          .roundRect(0, 0, BTN_W, 44, 10)
           .fill({ color: 0x000000, alpha: 0.35 })
           .stroke({ color: selected ? COLORS.superBarFull : 0x6d5a45, width: selected ? 3 : 1 }),
     };

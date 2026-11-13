@@ -76,6 +76,12 @@ export class MenuList extends Container {
     return false;
   }
 
+  /** Change an item's label, e.g. for toggles. */
+  setLabel(index: number, label: string): void {
+    this.items[index].label = label;
+    this.buttons[index].text.text = label;
+  }
+
   /** Redraw highlights, e.g. after setting `selected` directly. */
   redraw(): void {
     this.buttons.forEach(({ bg }, i) => {

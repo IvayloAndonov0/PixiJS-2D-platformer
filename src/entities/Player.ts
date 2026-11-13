@@ -1,4 +1,5 @@
-import { AnimatedSprite, Container, Graphics } from "pixi.js";
+import { playSfx, SFX, stopMusic } from "../audio";
+import { AnimatedSprite, Container, Graphics, Sprite } from "pixi.js";
 import { anim } from "../assets";
 import { BULLET, COLORS, DEBUG_HITBOXES, GAME_HEIGHT, GAME_WIDTH, GROUND_Y, PLAYER, SHADOW_DASH, SUPER, WEAPONS } from "../config";
 import type { Input } from "../core/Input";
