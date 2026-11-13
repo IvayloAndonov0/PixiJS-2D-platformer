@@ -10,6 +10,9 @@ import type { Rect } from "../systems/collision";
 import type { Terrain } from "../level/Terrain";
 import type { Platform } from "./Platform";
 
+/** Every weapon throws the same card art (only damage, speed and spread differ). */
+const CARD_SPRITE = { sheet: "fx", anim: "Card", scale: 0.55 } as const;
+
 /** Player animation name in assets/sprites/player.json -> playback settings. */
 const ANIMS = {
   Idle: { fps: 10, loop: true },
@@ -468,7 +471,7 @@ export class Player extends Container {
     switch (this.weapon) {
       case "blaster":
         this.fireTimer = 1 / PLAYER.fireRate;
-        this.bullets.spawn(x, y, dx * BULLET.speed, dy * BULLET.speed, { sprite: { sheet: "fx", anim: "Card", scale: 0.55 } });
+        this.bullets.spawn(x, y, dx * BULLET.speed, dy * BULLET.speed, { sprite: CARD_SPRITE });
         break;
       case "spread": {
         const w = WEAPONS.spread;
@@ -479,7 +482,7 @@ export class Player extends Container {
           this.bullets.spawn(x, y, Math.cos(a) * w.speed, Math.sin(a) * w.speed, {
             damage: w.damage,
             radius: w.radius,
-            color: 0xffb74d,
+            sprite: CARD_SPRITE,
             life: w.range / w.speed,
           });
         }
@@ -491,7 +494,7 @@ export class Player extends Container {
         this.bullets.spawn(x, y, dx * w.speed, dy * w.speed, {
           damage: w.damage,
           radius: w.radius,
-          color: 0xb388ff,
+          sprite: CARD_SPRITE,
           life: w.life,
           homing: { target: () => this.aimTarget?.(), turnRate: w.turnRate },
         });
