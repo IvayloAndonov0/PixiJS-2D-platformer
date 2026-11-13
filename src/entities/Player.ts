@@ -1,4 +1,4 @@
-import { playSfx, SFX, stopMusic } from "../audio";
+import { playShootSound, playSfx, SFX, stopMusic } from "../audio";
 import { AnimatedSprite, Container, Graphics, Sprite } from "pixi.js";
 import { anim } from "../assets";
 import { BULLET, COLORS, DEBUG_HITBOXES, GAME_HEIGHT, GAME_WIDTH, GROUND_Y, PLAYER, SHADOW_DASH, SUPER, WEAPONS } from "../config";
@@ -498,7 +498,7 @@ export class Player extends Container {
         break;
       }
     }
-    // TODO(audio): shoot sound
+    playShootSound();
   }
 
   /** Shadow Dash trail: leave fading dark copies of the sprite behind while phasing. */

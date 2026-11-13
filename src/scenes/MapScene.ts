@@ -1,5 +1,5 @@
 import { AnimatedSprite, Container, Graphics, Sprite, Text, type FederatedPointerEvent } from "pixi.js";
-import { MUSIC, playMusic } from "../audio";
+import { MUSIC, playCoinSound, playMusic } from "../audio";
 import { anim, image, type ImageName } from "../assets";
 import { BOSSES } from "../bosses";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
@@ -429,7 +429,7 @@ export class MapScene extends Scene {
       this.refreshCoinText();
       const left = MAP_COINS.filter((m) => !save.collectedCoins.includes(m.id)).length;
       this.showToast(left > 0 ? `+1 coin  (${left} left on the map)` : "+1 coin  (found them all!)", 0xffd54f);
-      // TODO(audio): coin sound
+      playCoinSound();
     }
   }
 

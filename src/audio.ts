@@ -129,6 +129,71 @@ export function playSfx(file: string, volume = 0.8, maxSeconds?: number): void {
   audio.addEventListener("ended", () => set.delete(entry));
 }
 
+let audioCtx: AudioContext | undefined;
+
+/** Shared AudioContext for synthesised sounds (undefined if Web Audio is unavailable). */
+function synthCtx(): AudioContext | undefined {
+  try {
+    audioCtx ??= new AudioContext();
+    if (audioCtx.state === "suspended") void audioCtx.resume();
+    return audioCtx;
+  } catch {
+    return undefined;
+  }
+}
+
+/** One soft note: sine wave, gentle attack, exponential fade, optional pitch glide, low-passed. */
+function softTone(
+  ctx: AudioContext,
+  { freq, endFreq = freq, start = 0, attack = 0.01, length, volume, wave = "sine", cutoff = 3000 }: {
+    freq: number;
+    endFreq?: number;
+    start?: number;
+    attack?: number;
+    length: number;
+    volume: number;
+    wave?: OscillatorType;
+    cutoff?: number;
+  },
+): void {
+  const t = ctx.currentTime + start;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = cutoff;
+  osc.type = wave;
+  osc.frequency.setValueAtTime(freq, t);
+  if (endFreq !== freq) osc.frequency.exponentialRampToValueAtTime(endFreq, t + length);
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(volume, t + attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + length);
+  osc.connect(filter).connect(gain).connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + length + 0.02);
+}
+
+/** Synth effects get louder while music is playing so they stay audible over it. */
+const MUSIC_BOOST = 3;
+const withMusicBoost = (volume: number): number => (musicEnabled && current !== undefined ? volume * MUSIC_BOOST : volume);
+
+/** Soft coin "ding": two gentle rising sine notes. */
+export function playCoinSound(volume = 0.06): void {
+  const ctx = synthCtx();
+  if (!ctx) return;
+  const v = withMusicBoost(volume);
+  softTone(ctx, { freq: 988, start: 0, attack: 0.012, length: 0.2, volume: v });
+  softTone(ctx, { freq: 1319, start: 0.07, attack: 0.012, length: 0.32, volume: v });
+}
+
+/** Quiet, low "pup": a short downward-gliding sine with a little pitch variation so held fire isn't monotone. */
+export function playShootSound(volume = 0.04): void {
+  const ctx = synthCtx();
+  if (!ctx) return;
+  const f = 330 * (0.94 + Math.random() * 0.12);
+  softTone(ctx, { freq: f, endFreq: f * 0.55, attack: 0.004, length: 0.09, volume: withMusicBoost(volume), cutoff: 1500 });
+}
+
 /** Fade out every playing instance of `file` (e.g. SFX.death when the player moves on). */
 export function stopSfx(file: string): void {
   const set = activeSfx.get(file);
