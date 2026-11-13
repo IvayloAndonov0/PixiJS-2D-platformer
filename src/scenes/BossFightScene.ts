@@ -12,6 +12,7 @@ import { Effects } from "../systems/Effects";
 import { circleRect, rectsOverlap } from "../systems/collision";
 import { HUD } from "../ui/HUD";
 import { MenuList } from "../ui/MenuList";
+import { loadout } from "../core/Upgrades";
 import { ResultScene } from "./ResultScene";
 import { MapScene } from "./MapScene";
 
@@ -78,8 +79,14 @@ export class BossFightScene extends Scene {
     });
 
     this.player = new Player(game.input, this.playerBullets, this.terrain, this.fx);
+    this.player.equip(loadout()); // shop weapons + charm from the current save file
     this.boss = entry.create(this.bossBullets, this.player);
     this.boss.fx = this.fx;
+    this.player.aimTarget = () => {
+      if (!this.locked || this.boss.isDead) return undefined; // homing shots fly straight during the parkour
+      const h = this.boss.hitbox;
+      return { x: h.x + h.w / 2, y: h.y + h.h / 2 };
+    };
     this.hud = new HUD(this.player, this.boss, game.input);
 
     // Signs along the parkour
@@ -168,7 +175,7 @@ export class BossFightScene extends Scene {
             won,
             time: this.elapsed,
             hpLeft: this.player.hp,
-            maxHp: PLAYER.maxHp,
+            maxHp: this.player.maxHp,
             parries: this.parries,
             supers: this.player.supersUsed,
             bossDamage: won ? 1 : 1 - Math.max(0, this.boss.hp) / this.boss.maxHp,
@@ -277,6 +284,7 @@ export class BossFightScene extends Scene {
         continue;
       }
       if (circleRect(b.hitbox, playerBox)) {
+        if (this.player.isPhasing) continue; // Shadow Dash: bullets pass straight through
         b.dead = true;
         this.player.takeHit();
       }

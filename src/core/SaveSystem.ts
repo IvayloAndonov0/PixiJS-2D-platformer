@@ -1,5 +1,6 @@
 import { BOSSES } from "../bosses";
 import type { BossRecord } from "./Progress";
+import { type CharmId, DEFAULT_LOADOUT, type ItemId, type Loadout, type WeaponId, isCharm, isWeapon } from "./Upgrades";
 
 /**
  * Save files: SLOT_COUNT slots in localStorage, one self-contained JSON blob each.
@@ -25,14 +26,30 @@ export interface SaveData {
   mapPos?: { x: number; y: number };
   /** Best attempt per boss, keyed by boss name. */
   bosses: Record<string, BossRecord>;
+  coins: number;
+  /** Ids of map coins already picked up (each can only be collected once per file). */
+  collectedCoins: string[];
+  /** Shop items bought (see Upgrades.ts). */
+  owned: ItemId[];
+  loadout: Loadout;
 }
 
 let activeSlot: number | undefined;
-let active: SaveData = freshSave();
+/** Created lazily: Upgrades.ts and this module import each other. */
+let active: SaveData | undefined;
 
 function freshSave(): SaveData {
   const now = Date.now();
-  return { version: SAVE_VERSION, created: now, lastPlayed: now, bosses: {} };
+  return {
+    version: SAVE_VERSION,
+    created: now,
+    lastPlayed: now,
+    bosses: {},
+    coins: 0,
+    collectedCoins: [],
+    owned: [],
+    loadout: { weapons: [...DEFAULT_LOADOUT.weapons], charm: DEFAULT_LOADOUT.charm },
+  };
 }
 
 // ---------------------------------------------------------------- (de)serialization
@@ -53,12 +70,24 @@ export function deserialize(raw: string): SaveData | undefined {
       }
     }
     const pos = d.mapPos;
+    const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s) => typeof s === "string") : []);
+    const owned = strings(d.owned).filter((id): id is ItemId => isWeapon(id) || isCharm(id));
+    const lo = d.loadout as Partial<Loadout> | undefined;
+    const w = Array.isArray(lo?.weapons) ? lo.weapons : [];
+    const ownedOrFree = (id: unknown) => typeof id === "string" && (id === "blaster" || owned.includes(id as ItemId));
+    const w0 = ownedOrFree(w[0]) && isWeapon(w[0] as string) ? (w[0] as WeaponId) : "blaster";
+    const w1 = ownedOrFree(w[1]) && isWeapon(w[1] as string) && w[1] !== w0 ? (w[1] as WeaponId) : null;
+    const charm = ownedOrFree(lo?.charm) && isCharm(lo?.charm as string) ? (lo!.charm as CharmId) : null;
     return {
       version: SAVE_VERSION,
       created: typeof d.created === "number" ? d.created : Date.now(),
       lastPlayed: typeof d.lastPlayed === "number" ? d.lastPlayed : Date.now(),
       mapPos: pos && typeof pos.x === "number" && typeof pos.y === "number" ? { x: pos.x, y: pos.y } : undefined,
       bosses,
+      coins: typeof d.coins === "number" && d.coins >= 0 ? Math.floor(d.coins) : 0,
+      collectedCoins: strings(d.collectedCoins),
+      owned,
+      loadout: { weapons: [w0, w1], charm },
     };
   } catch {
     return undefined;
@@ -96,7 +125,7 @@ export function deleteSlot(slot: number): void {
   }
   if (activeSlot === slot) {
     activeSlot = undefined;
-    active = freshSave();
+    active = undefined;
   }
 }
 
@@ -104,15 +133,16 @@ export function deleteSlot(slot: number): void {
 
 /** The save being played. Mutate it, then call saveGame(). */
 export function currentSave(): SaveData {
-  return active;
+  return (active ??= freshSave());
 }
 
 /** Write the active save to its slot. Returns false if there's no slot or storage failed. */
 export function saveGame(): boolean {
   if (activeSlot === undefined) return false;
-  active.lastPlayed = Date.now();
+  const save = currentSave();
+  save.lastPlayed = Date.now();
   try {
-    localStorage.setItem(KEY_PREFIX + activeSlot, serialize(active));
+    localStorage.setItem(KEY_PREFIX + activeSlot, serialize(save));
     return true;
   } catch {
     return false;

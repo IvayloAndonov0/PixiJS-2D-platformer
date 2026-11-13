@@ -16,7 +16,8 @@ export const PLAYER = {
   gravity: 2600, // px/s^2
   maxFallSpeed: 1400,
   dashSpeed: 900,
-  dashDuration: 0.18, // s (player is invulnerable while dashing)
+  dashDuration: 0.18, // s
+  dashInvulnerable: false, // true = every dash has i-frames (otherwise only with the Shadow Dash charm)
   dashCooldown: 0.5,
   maxHp: 3,
   invulnTime: 1.2, // s of i-frames after taking a hit
@@ -78,4 +79,32 @@ export const COLORS = {
   bossBar: 0xd32f2f,
   superBar: 0x4dd0e1,
   superBarFull: 0xffeb3b,
+};
+
+/** Shop weapons (see core/Upgrades.ts). The Blaster uses BULLET + PLAYER.fireRate. */
+export const WEAPONS = {
+  spread: {
+    fireRate: 5,
+    angles: [-0.2, 0, 0.2], // radians, one bullet each
+    speed: 950,
+    range: 300, // px before the shots fizzle out
+    damage: 1.8,
+    radius: 7,
+  },
+  homing: {
+    fireRate: 6,
+    speed: 650,
+    turnRate: 7, // radians per second the shot can curve
+    life: 2.5,
+    damage: 0.9,
+    radius: 9,
+  },
+};
+
+/** Shadow Dash charm: afterimages left behind while dashing. */
+export const SHADOW_DASH = {
+  tint: 0x4a3a6a,
+  alpha: 0.75,
+  trailEvery: 0.03, // s between afterimages
+  trailLife: 0.25, // s each afterimage takes to fade
 };

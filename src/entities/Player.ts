@@ -1,7 +1,8 @@
-import { AnimatedSprite, Container, Graphics } from "pixi.js";
+import { AnimatedSprite, Container, Graphics, Sprite } from "pixi.js";
 import { anim } from "../assets";
-import { BULLET, COLORS, DEBUG_HITBOXES, GAME_HEIGHT, GAME_WIDTH, GROUND_Y, PLAYER, SUPER } from "../config";
+import { BULLET, COLORS, DEBUG_HITBOXES, GAME_HEIGHT, GAME_WIDTH, GROUND_Y, PLAYER, SHADOW_DASH, SUPER, WEAPONS } from "../config";
 import type { Input } from "../core/Input";
+import { type CharmId, DEFAULT_LOADOUT, type Loadout, type WeaponId } from "../core/Upgrades";
 import type { BulletPool } from "../systems/BulletPool";
 import type { Effects } from "../systems/Effects";
 import type { Rect } from "../systems/collision";
@@ -26,17 +27,19 @@ type AnimName = keyof typeof ANIMS;
 
 /**
  * Run-and-gun player:
- *  - move, variable-height jump, dash (invulnerable while dashing)
+ *  - move, variable-height jump, dash (vulnerable, unless the Shadow Dash charm is equipped)
  *  - crouch: hold Down on the floor (shorter hitbox, can't walk, shoots low)
  *  - one-way platforms: jump up through them, press Down while standing on one to drop through
  *  - shoot in 8 directions, hold "lock" to aim in place
  *  - parry: press Jump again in mid-air to parry parryable projectiles (bounces you up, fills super meter)
  *  - special: when the super meter is full, press Special for a big piercing shot
+ *  - loadout (from the shop): 2 weapons (Switch Weapon key toggles) + 1 charm, set with equip()
  * Position (x, y) is the bottom-center of the feet.
  */
 export class Player extends Container {
   vx = 0;
   vy = 0;
+  maxHp = PLAYER.maxHp;
   hp = PLAYER.maxHp;
   facing: 1 | -1 = 1;
   onGround = true;
@@ -69,6 +72,16 @@ export class Player extends Container {
   /** True while being launched back up out of a pit (ignores jump-cut until the apex). */
   private pitBounce = false;
 
+  /** Equipped weapons (second slot may be empty) and which one is in hand. */
+  private weapons: [WeaponId, WeaponId | null] = [...DEFAULT_LOADOUT.weapons];
+  private weaponIndex = 0;
+  private charm: CharmId | null = null;
+  /** Where homing shots steer to (set by the fight scene to the boss's center). */
+  aimTarget?: () => { x: number; y: number } | undefined;
+  /** Shadow Dash afterimages. */
+  private trailTimer = 0;
+  private afterimages: Sprite[] = [];
+
   /** Horizontal movement limits. The fight scene moves minX to lock the player into the arena. */
   minX = 0;
   maxX = GAME_WIDTH;
@@ -86,6 +99,28 @@ export class Player extends Container {
     if (DEBUG_HITBOXES) this.addChild(this.debugBox);
     this.position.set(200, GROUND_Y);
     this.play("Idle");
+  }
+
+  /** Apply the shop loadout: weapons, and charms that change stats (Extra Heart). */
+  equip(lo: Loadout): void {
+    this.weapons = [lo.weapons[0], lo.weapons[1]];
+    this.weaponIndex = 0;
+    this.charm = lo.charm;
+    this.maxHp = PLAYER.maxHp + (lo.charm === "heart" ? 1 : 0);
+    this.hp = this.maxHp;
+  }
+
+  get weapon(): WeaponId {
+    return this.weapons[this.weaponIndex] ?? this.weapons[0];
+  }
+
+  get hasSecondWeapon(): boolean {
+    return this.weapons[1] !== null;
+  }
+
+  /** Shadow Dash: mid-dash the player passes through bullets and the boss without harm. */
+  get isPhasing(): boolean {
+    return this.dashTimer > 0 && this.charm === "shadow";
   }
 
   /** Place the player on the floor at `x`. */
@@ -125,7 +160,7 @@ export class Player extends Container {
   }
 
   get isInvulnerable(): boolean {
-    return this.invulnTimer > 0 || this.dashTimer > 0;
+    return this.invulnTimer > 0 || this.isPhasing || (this.dashTimer > 0 && PLAYER.dashInvulnerable);
   }
 
   get superReady(): boolean {
@@ -160,6 +195,7 @@ export class Player extends Container {
   }
 
   update(dt: number): void {
+    this.updateAfterimages(dt);
     if (this.isDead) {
       this.updateDeath(dt);
       return;
@@ -281,9 +317,14 @@ export class Player extends Container {
       this.fireSpecial();
     }
 
+    // --- Switch weapon ---
+    if (input.wasPressed("swap") && this.hasSecondWeapon) {
+      this.weaponIndex = 1 - this.weaponIndex;
+      this.fireTimer = Math.max(this.fireTimer, 0.1); // tiny delay so the swap reads
+    }
+
     // --- Shoot ---
     if (input.isDown("shoot") && this.fireTimer === 0 && this.dashTimer === 0) {
-      this.fireTimer = 1 / PLAYER.fireRate;
       this.shoot();
     }
 
@@ -315,8 +356,9 @@ export class Player extends Container {
     else this.play("Idle");
 
     // TODO(art): dedicated parry frames. For now: tint during the parry window.
-    this.sprite.tint = this.isParrying ? COLORS.parryable : 0xffffff;
+    this.sprite.tint = this.isParrying ? COLORS.parryable : this.isPhasing ? SHADOW_DASH.tint : 0xffffff;
     this.alpha = this.invulnTimer > 0 && Math.floor(this.invulnTimer * 20) % 2 === 0 ? 0.35 : 1;
+    if (this.isPhasing) this.alpha = SHADOW_DASH.alpha;
     this.scale.x = this.facing;
 
     if (DEBUG_HITBOXES) {
@@ -415,11 +457,72 @@ export class Player extends Container {
     return { dx: dx / len, dy: dy / len };
   }
 
+  /** Fire the weapon in hand and start its cooldown. */
   private shoot(): void {
     const { x, y } = this.muzzle();
     const { dx, dy } = this.aimDirection();
-    this.bullets.spawn(x, y, dx * BULLET.speed, dy * BULLET.speed, { sprite: { sheet: "fx", anim: "Card", scale: 0.55 } });
+    switch (this.weapon) {
+      case "blaster":
+        this.fireTimer = 1 / PLAYER.fireRate;
+        this.bullets.spawn(x, y, dx * BULLET.speed, dy * BULLET.speed, { sprite: { sheet: "fx", anim: "Card", scale: 0.55 } });
+        break;
+      case "spread": {
+        const w = WEAPONS.spread;
+        this.fireTimer = 1 / w.fireRate;
+        const base = Math.atan2(dy, dx);
+        for (const off of w.angles) {
+          const a = base + off;
+          this.bullets.spawn(x, y, Math.cos(a) * w.speed, Math.sin(a) * w.speed, {
+            damage: w.damage,
+            radius: w.radius,
+            color: 0xffb74d,
+            life: w.range / w.speed,
+          });
+        }
+        break;
+      }
+      case "homing": {
+        const w = WEAPONS.homing;
+        this.fireTimer = 1 / w.fireRate;
+        this.bullets.spawn(x, y, dx * w.speed, dy * w.speed, {
+          damage: w.damage,
+          radius: w.radius,
+          color: 0xb388ff,
+          life: w.life,
+          homing: { target: () => this.aimTarget?.(), turnRate: w.turnRate },
+        });
+        break;
+      }
+    }
     // TODO(audio): shoot sound
+  }
+
+  /** Shadow Dash trail: leave fading dark copies of the sprite behind while phasing. */
+  private updateAfterimages(dt: number): void {
+    if (this.isPhasing && this.parent) {
+      this.trailTimer -= dt;
+      if (this.trailTimer <= 0) {
+        this.trailTimer = SHADOW_DASH.trailEvery;
+        const ghost = new Sprite(this.sprite.texture);
+        ghost.anchor.copyFrom(this.sprite.anchor);
+        ghost.scale.set(this.sprite.scale.x * this.scale.x, this.sprite.scale.y);
+        ghost.position.copyFrom(this.position);
+        ghost.tint = SHADOW_DASH.tint;
+        ghost.alpha = 0.6;
+        this.parent.addChildAt(ghost, this.parent.getChildIndex(this));
+        this.afterimages.push(ghost);
+      }
+    } else {
+      this.trailTimer = 0;
+    }
+    for (let i = this.afterimages.length - 1; i >= 0; i--) {
+      const g = this.afterimages[i];
+      g.alpha -= (0.6 / SHADOW_DASH.trailLife) * dt;
+      if (g.alpha <= 0) {
+        g.destroy();
+        this.afterimages.splice(i, 1);
+      }
+    }
   }
 
   private fireSpecial(): void {

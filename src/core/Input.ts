@@ -8,7 +8,7 @@
  * "Mouse0" (left), "Mouse1" (middle), "Mouse2" (right), "Mouse3"/"Mouse4" (side buttons).
  */
 
-export type Action = "left" | "right" | "up" | "down" | "jump" | "shoot" | "dash" | "lock" | "special" | "pause";
+export type Action = "left" | "right" | "up" | "down" | "jump" | "shoot" | "dash" | "lock" | "special" | "swap" | "pause";
 
 export type MenuAction = "up" | "down" | "left" | "right" | "confirm" | "back" | "clear";
 
@@ -26,6 +26,7 @@ export const ACTION_LABELS: Record<Action, string> = {
   dash: "Dash",
   lock: "Lock Aim",
   special: "Super",
+  swap: "Switch Weapon",
   pause: "Pause",
 };
 
@@ -42,6 +43,7 @@ export const DEFAULT_BINDINGS: Record<Action, (string | null)[]> = {
   dash: ["ShiftLeft", "KeyC"],
   lock: ["KeyV", null],
   special: ["Mouse2", "KeyQ"],
+  swap: ["KeyE", "KeyF"],
   pause: ["Escape", "KeyP"],
 };
 
