@@ -4,7 +4,7 @@ import type { BulletPool } from "../../systems/BulletPool";
 import type { BulletShape } from "../Bullet";
 import type { Player } from "../Player";
 import { CrowModel } from "./art/CrowModel";
-import { FEATHER, TORNADO, lightningBolt } from "./art/projectiles";
+import { FEATHER, lightningBolt } from "./art/projectiles";
 import { Boss, type Attack, type Phase } from "./Boss";
 
 /** Bottom of the body while hovering. */
@@ -31,12 +31,12 @@ export class StormCrow extends Boss {
     this.useModel(this.crow);
 
     this.phases = [
-      { name: "Phase 1", untilHpFraction: 0.6, attacks: [this.glide, this.featherFan, this.glide, this.rain, this.tornado], restTime: 0.9 },
+      { name: "Phase 1", untilHpFraction: 0.6, attacks: [this.glide, this.featherFan, this.glide, this.rain,], restTime: 0.9 },
       { name: "Phase 2", untilHpFraction: 0.3, attacks: [this.featherFan, this.dive, this.lightning, this.glide, this.rain, this.dive], restTime: 0.7 },
       {
         name: "Phase 3",
         untilHpFraction: 0,
-        attacks: [this.dive, this.lightning, this.featherFan, this.tornado, this.dive, this.rain, this.glide],
+        attacks: [this.dive, this.lightning, this.featherFan, this.dive, this.rain, this.glide],
         restTime: 0.45,
       },
     ];
@@ -142,24 +142,6 @@ export class StormCrow extends Boss {
       // TODO(audio): thunder crack
     });
     return this.count >= count && t > warn + (count - 1) * gap + 0.4;
-  };
-
-  /**
-   * NEW: big wing-beats whip up a tornado that rolls along the floor toward the player.
-   * It's short enough to jump over (or dash through).
-   */
-  private tornado: Attack = (_dt, t) => {
-    this.crow.pose = "gust";
-    this.faceThePlayer();
-    const fromLeft = this.player.x > this.x;
-    const done = this.fireEvery(t - 0.5, 1, 1, () => {
-      const x = this.x;
-      const vx = fromLeft ? 300 : -300;
-      // The visible funnel + two hidden hitboxes stacked above it.
-      this.bullets.spawn(x, GROUND_Y - 34, vx, 0, { radius: 30, shape: { ctx: TORNADO(), orient: false, scale: 0.9 } });
-      this.bullets.spawn(x, GROUND_Y - 84, vx, 0, { radius: 26, hidden: true });
-    });
-    return done && t > 1.2;
   };
 
   private faceThePlayer(): void {

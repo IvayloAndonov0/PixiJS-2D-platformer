@@ -6,10 +6,11 @@ import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { formatTime, getRecord } from "../core/Progress";
 import { currentSave, saveGame } from "../core/SaveSystem";
 import { Scene } from "../core/Scene";
-import { LAKE, MAP_H, MAP_NODES, MAP_PATHS, MAP_START, MAP_W, type MapNode } from "../level/overworld";
+import { LAKE, MAP_COINS, MAP_H, MAP_NODES, MAP_PATHS, MAP_SHOP, MAP_START, MAP_W, SHOP_PATH, type MapNode } from "../level/overworld";
 import { MenuList } from "../ui/MenuList";
 import { BossFightScene } from "./BossFightScene";
 import { SettingsScene } from "./SettingsScene";
+import { ShopScene } from "./ShopScene";
 import { TitleScene } from "./TitleScene";
 
 const WALK_SPEED = 280; // px/s
@@ -17,6 +18,8 @@ const FEET_R = 14; // player collision radius
 const NODE_RANGE = 95; // how close you must be to a level marker to enter it
 const PATH_CLEARANCE = 70; // keep trees this far from path centerlines
 const FADE_TIME = 0.35;
+const COIN_PICKUP_RANGE = 34; // px from the player's feet
+const COIN_CLEARANCE = 60; // keep trees and bushes this far from hidden coins
 const TREE_SCALE = 1.3; // Tree1.png is 128px; this makes it roughly the size of the old drawn trees
 const TREE_BASE_Y = 94 / 128; // shadow center in Tree1.png, as a fraction of its height
 
@@ -87,6 +90,13 @@ export class MapScene extends Scene {
   /** Visible areas of placed trees, rocks and bushes, so bushes never overlap them. */
   private sceneryBoxes: Box[] = [];
   private markers: { node: MapNode; view: Container; flag: Container }[] = [];
+  /** Coins still lying on the map, and ones playing their pickup pop. */
+  private coins: { id: string; x: number; y: number; view: Container }[] = [];
+  private popping: { view: Container; t: number }[] = [];
+  private coinText = new Text({
+    text: "",
+    style: { fill: 0xffd54f, fontSize: 26, fontWeight: "bold", stroke: { color: 0x000000, width: 5 } },
+  });
   private focused?: MapNode;
   private time = 0;
 
@@ -122,6 +132,8 @@ export class MapScene extends Scene {
     this.scatter(ROCKS, ROCK_COUNT, mulberry32(13), true);
     this.scatter(BUSHES, BUSH_COUNT, mulberry32(11), false);
     MAP_NODES.forEach((n) => this.addMarker(n));
+    this.addMarker(MAP_SHOP);
+    this.placeCoins();
     this.buildPlayer();
 
     const start = currentSave().mapPos ?? MAP_START;
@@ -135,11 +147,14 @@ export class MapScene extends Scene {
     });
     hint.position.set(14, 10);
 
+    this.coinText.anchor.set(1, 0);
+    this.coinText.position.set(GAME_WIDTH - 16, 8);
+    this.refreshCoinText();
     this.toast.anchor.set(1, 0);
-    this.toast.position.set(GAME_WIDTH - 16, 10);
+    this.toast.position.set(GAME_WIDTH - 16, 44);
 
     this.fade.alpha = 1; // fade in
-    this.addChild(this.world, hint, this.card, this.menuOverlay, this.toast, this.fade);
+    this.addChild(this.world, hint, this.coinText, this.card, this.menuOverlay, this.toast, this.fade);
     this.updateCamera(true);
   }
 
@@ -165,11 +180,13 @@ export class MapScene extends Scene {
     if (input.menuPressed("back")) return this.setMenu(true);
 
     this.movePlayer(dt);
+    this.collectCoins();
     this.updateFocus();
     if (this.focused && (input.menuPressed("confirm") || input.wasPressed("jump"))) this.enterNode(this.focused);
 
     this.updateCamera(false);
     this.animateMarkers();
+    this.animateCoins(dt);
   }
 
   // ---------------------------------------------------------------- player
@@ -248,6 +265,7 @@ export class MapScene extends Scene {
   // ---------------------------------------------------------------- levels
 
   private addMarker(node: MapNode): void {
+    if (node.shop) return this.addShop(node);
     const boss = node.boss !== undefined ? BOSSES[node.boss] : undefined;
     const record = boss ? getRecord(boss.name) : undefined;
     const view = new Container();
@@ -317,10 +335,136 @@ export class MapScene extends Scene {
     this.obstacles.push({ x: node.x, y: node.y - 6, r: 26 }); // the flagpole
   }
 
+  /** The shop: a little building with a sign. Walk up to the door and press Enter. */
+  private addShop(node: MapNode): void {
+    const view = new Container();
+    view.position.set(node.x, node.y);
+    view.zIndex = node.y;
+    const house = new Graphics()
+      .ellipse(0, 4, 84, 20)
+      .fill({ color: 0x000000, alpha: 0.22 })
+      // walls + planks
+      .rect(-66, -88, 132, 90)
+      .fill(0x9c7650)
+      .stroke({ color: 0x5d4037, width: 3 })
+      .rect(-66, -60, 132, 3)
+      .fill(0x7a5a3a)
+      .rect(-66, -30, 132, 3)
+      .fill(0x7a5a3a)
+      // roof
+      .poly([-84, -84, 0, -150, 84, -84])
+      .fill(0xb5463a)
+      .stroke({ color: 0x6e2a22, width: 3 })
+      // door
+      .roundRect(-18, -50, 36, 52, 6)
+      .fill(0x4e342e)
+      .circle(10, -24, 3)
+      .fill(COLORS.superBarFull)
+      // windows
+      .rect(-54, -66, 24, 22)
+      .fill(0xffe082)
+      .stroke({ color: 0x5d4037, width: 3 })
+      .rect(30, -66, 24, 22)
+      .fill(0xffe082)
+      .stroke({ color: 0x5d4037, width: 3 })
+      // sign board
+      .roundRect(-46, -116, 92, 30, 6)
+      .fill(0x3e2723)
+      .stroke({ color: COLORS.superBarFull, width: 2 });
+    const sign = new Text({ text: "SHOP", style: { fill: COLORS.superBarFull, fontSize: 20, fontWeight: "bold" } });
+    sign.anchor.set(0.5);
+    sign.position.set(0, -101);
+    const flag = new Container(); // markers need one; the shop has nothing that waves
+    view.addChild(house, sign, flag);
+
+    view.eventMode = "static";
+    view.cursor = "pointer";
+    view.hitArea = { contains: (x: number, y: number) => x >= -86 && x <= 86 && y >= -152 && y <= 20 };
+    view.on("pointertap", (e: FederatedPointerEvent) => {
+      e.stopPropagation();
+      if (this.menuOpen || this.next) return;
+      if (this.focused === node) this.enterNode(node);
+      else this.moveTarget = { x: node.x, y: node.y + 60 };
+    });
+    this.objects.addChild(view);
+    this.markers.push({ node, view, flag });
+    // Two circles cover the building's footprint; the door side (bottom) stays walkable.
+    this.obstacles.push({ x: node.x - 34, y: node.y - 30, r: 40 }, { x: node.x + 34, y: node.y - 30, r: 40 });
+  }
+
+  // ---------------------------------------------------------------- coins
+
+  private placeCoins(): void {
+    const collected = new Set(currentSave().collectedCoins);
+    for (const c of MAP_COINS) {
+      if (collected.has(c.id)) continue;
+      const view = new Container();
+      view.position.set(c.x, c.y);
+      view.zIndex = c.y;
+      const shadow = new Graphics().ellipse(0, 0, 11, 4).fill({ color: 0x000000, alpha: 0.25 });
+      const coin = new Graphics()
+        .circle(0, -20, 12)
+        .fill(0xffd54f)
+        .stroke({ color: 0xb8860b, width: 3 })
+        .circle(0, -20, 6)
+        .stroke({ color: 0xe6a817, width: 2 })
+        .circle(-4, -24, 2.5)
+        .fill(0xfff8e1);
+      view.addChild(shadow, coin);
+      this.objects.addChild(view);
+      this.coins.push({ ...c, view });
+    }
+  }
+
+  private collectCoins(): void {
+    for (let i = this.coins.length - 1; i >= 0; i--) {
+      const c = this.coins[i];
+      if (Math.hypot(c.x - this.player.x, c.y - this.player.y) > COIN_PICKUP_RANGE) continue;
+      this.coins.splice(i, 1);
+      const save = currentSave();
+      save.coins++;
+      save.collectedCoins.push(c.id);
+      saveGame();
+      this.popping.push({ view: c.view, t: 0 });
+      this.refreshCoinText();
+      const left = MAP_COINS.filter((m) => !save.collectedCoins.includes(m.id)).length;
+      this.showToast(left > 0 ? `+1 coin  (${left} left on the map)` : "+1 coin  (found them all!)", 0xffd54f);
+      // TODO(audio): coin sound
+    }
+  }
+
+  private animateCoins(dt: number): void {
+    for (const c of this.coins) {
+      const coin = c.view.children[1];
+      coin.y = Math.sin(this.time * 4 + c.x) * 3; // bob
+      coin.scale.x = Math.cos(this.time * 3 + c.y); // spin
+    }
+    for (let i = this.popping.length - 1; i >= 0; i--) {
+      const p = this.popping[i];
+      p.t += dt;
+      p.view.y -= 120 * dt;
+      p.view.alpha = 1 - p.t / 0.35;
+      if (p.t >= 0.35) {
+        p.view.destroy({ children: true });
+        this.popping.splice(i, 1);
+      }
+    }
+  }
+
+  private refreshCoinText(): void {
+    this.coinText.text = `Coins: ${currentSave().coins}`;
+  }
+
+  private showToast(text: string, color: number): void {
+    this.toast.text = text;
+    this.toast.style.fill = color;
+    this.toastTimer = 2;
+  }
+
   private updateFocus(): void {
     let best: MapNode | undefined;
     let bestD = NODE_RANGE;
-    for (const n of MAP_NODES) {
+    for (const n of [...MAP_NODES, MAP_SHOP]) {
       const d = Math.hypot(n.x - this.player.x, n.y - this.player.y);
       if (d < bestD) {
         best = n;
@@ -333,7 +477,13 @@ export class MapScene extends Scene {
   }
 
   private enterNode(node: MapNode): void {
-    if (node.boss === undefined || this.next) return;
+    if (this.next) return;
+    if (node.shop) {
+      this.autosave({ x: node.x, y: node.y + 60 }); // come back standing at the door
+      this.startFade(() => this.game.changeScene(new ShopScene(this.game, "shop")));
+      return;
+    }
+    if (node.boss === undefined) return;
     const bossIndex = node.boss;
     this.autosave({ x: node.x, y: node.y + 60 }); // come back standing next to this level
     this.startFade(() => this.game.changeScene(new BossFightScene(this.game, bossIndex)));
@@ -373,6 +523,13 @@ export class MapScene extends Scene {
     const node = this.focused;
     this.card.visible = node !== undefined;
     if (!node) return;
+    if (node.shop) {
+      this.cardTitle.text = "Shop";
+      this.cardInfo.text = `Weapons and charms for coins. You have ${currentSave().coins}.`;
+      this.cardPrompt.text = "Enter / Click to go in";
+      this.card.cursor = "pointer";
+      return;
+    }
     const boss = node.boss !== undefined ? BOSSES[node.boss] : undefined;
     if (!boss) {
       this.cardTitle.text = "???";
@@ -403,6 +560,13 @@ export class MapScene extends Scene {
       { label: "Resume", onSelect: () => this.setMenu(false) },
       { label: "Save game", onSelect: () => this.manualSave() },
       {
+        label: "Equipment",
+        onSelect: () => {
+          this.autosave();
+          this.startFade(() => this.game.changeScene(new ShopScene(this.game, "equip")));
+        },
+      },
+      {
         label: "Settings",
         onSelect: () => {
           this.autosave();
@@ -417,7 +581,7 @@ export class MapScene extends Scene {
         },
       },
     ]);
-    this.menu.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90);
+    this.menu.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 110);
     this.menuOverlay.addChild(dim, title, this.menu);
     this.menuOverlay.visible = false;
   }
@@ -437,9 +601,7 @@ export class MapScene extends Scene {
   private manualSave(): void {
     const ok = this.autosave();
     this.setMenu(false);
-    this.toast.text = ok ? "Game saved" : "No save file selected";
-    this.toast.style.fill = ok ? COLORS.parryable : COLORS.bossBar;
-    this.toastTimer = 2;
+    this.showToast(ok ? "Game saved" : "No save file selected", ok ? COLORS.parryable : COLORS.bossBar);
   }
 
   private startFade(then: () => void): void {
@@ -495,11 +657,12 @@ export class MapScene extends Scene {
       const last = pts[pts.length - 1];
       g.lineTo(last.x, last.y);
     };
-    for (const p of MAP_PATHS) {
+    const paths = [...MAP_PATHS, SHOP_PATH];
+    for (const p of paths) {
       trace(p);
       g.stroke({ color: 0x9c7b4f, width: 58, cap: "round", join: "round" });
     }
-    for (const p of MAP_PATHS) {
+    for (const p of paths) {
       trace(p);
       g.stroke({ color: 0xc8a876, width: 46, cap: "round", join: "round" });
     }
@@ -538,7 +701,11 @@ export class MapScene extends Scene {
         // These spots used to hold drawn rocks. Skip them, but still draw the number the rock used
         // so the trees after it stay where they were.
         if (r2 < 0.15 && edge > 150) rand();
-        else this.addTree(px, py, rand);
+        else if (this.isReserved(px, py)) {
+          // Skip, but use up addTree's 2 random numbers so every later tree stays where it was.
+          rand();
+          rand();
+        } else this.addTree(px, py, rand);
       }
     }
   }
@@ -552,6 +719,15 @@ export class MapScene extends Scene {
     for (const n of [...MAP_NODES, MAP_START]) if (Math.hypot(n.x - x, n.y - y) < 200) return false;
     for (const c of LAKE) if (Math.hypot(c.x - x, c.y - y) < c.r + 50) return false;
     return true;
+  }
+
+  /** Spots added after the tree layout was made (shop, its path, coins): kept clear separately. */
+  private isReserved(x: number, y: number): boolean {
+    if (Math.hypot(MAP_SHOP.x - x, MAP_SHOP.y - y) < 200) return true;
+    for (let i = 0; i < SHOP_PATH.length - 1; i++) {
+      if (distToSegment(x, y, SHOP_PATH[i], SHOP_PATH[i + 1]) < PATH_CLEARANCE) return true;
+    }
+    return MAP_COINS.some((c) => Math.hypot(c.x - x, c.y - y) < COIN_CLEARANCE);
   }
 
   private addTree(x: number, y: number, rand: () => number): void {
@@ -582,7 +758,7 @@ export class MapScene extends Scene {
       const def = defs[Math.floor(rand() * defs.length)];
       const k = def.scale * (0.85 + rand() * 0.3);
       const flip = rand() < 0.5 ? -1 : 1;
-      if (!this.isOpen(x, y)) continue;
+      if (!this.isOpen(x, y) || this.isReserved(x, y)) continue;
 
       // Anchor at the bottom-center of the visible pixels so the sprite sits on (x, y).
       const ax = (def.minX + def.maxX + 1) / 2;

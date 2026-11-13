@@ -5,8 +5,8 @@ import type { Game } from "../core/Game";
 import { Scene } from "../core/Scene";
 import { TitleScene } from "./TitleScene";
 
-const ROW_H = 44;
-const TOP = 130;
+const ROW_H = 40;
+const TOP = 120;
 const LABEL_X = 260;
 const SLOT_X = [620, 880];
 const SLOT_W = 230;

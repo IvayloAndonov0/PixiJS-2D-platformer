@@ -49,6 +49,8 @@ export interface BulletOptions {
   sprite?: BulletSprite;
   /** Use a shape drawn in code (see entities/bosses/art/projectiles.ts). */
   shape?: BulletShape;
+  /** Steer toward a moving target (keeps its speed). `target` returning undefined = fly straight. */
+  homing?: { target: () => { x: number; y: number } | undefined; turnRate: number };
 }
 
 export class Bullet extends Container {
@@ -64,6 +66,7 @@ export class Bullet extends Container {
   private life: number;
   private orient = false;
   private angleOffset = 0;
+  private homing?: BulletOptions["homing"];
 
   constructor(
     readonly owner: BulletOwner,
@@ -80,6 +83,7 @@ export class Bullet extends Container {
     this.piercing = opts.piercing ?? false;
     this.gravity = opts.gravity ?? 0;
     this.life = opts.life ?? Infinity;
+    this.homing = opts.homing;
     this.position.set(x, y);
 
     if (opts.hidden) {
@@ -129,6 +133,19 @@ export class Bullet extends Container {
     this.life -= dt;
     if (this.life <= 0) this.dead = true;
     this.vy += this.gravity * dt;
+    const target = this.homing?.target();
+    if (target) {
+      // Turn the velocity toward the target by at most turnRate * dt, keeping the speed.
+      const speed = Math.hypot(this.vx, this.vy);
+      const current = Math.atan2(this.vy, this.vx);
+      let diff = Math.atan2(target.y - this.y, target.x - this.x) - current;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff)); // wrap to -PI..PI
+      const max = this.homing!.turnRate * dt;
+      const a = current + Math.max(-max, Math.min(max, diff));
+      this.vx = Math.cos(a) * speed;
+      this.vy = Math.sin(a) * speed;
+      if (this.orient) this.rotation = a + this.angleOffset;
+    }
     if (this.orient && this.gravity) this.rotation = Math.atan2(this.vy, this.vx) + this.angleOffset;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
