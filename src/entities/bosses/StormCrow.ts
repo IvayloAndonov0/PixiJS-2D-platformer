@@ -4,7 +4,7 @@ import type { BulletPool } from "../../systems/BulletPool";
 import type { BulletShape } from "../Bullet";
 import type { Player } from "../Player";
 import { CrowModel } from "./art/CrowModel";
-import { FEATHER, TORNADO, lightningBolt } from "./art/projectiles";
+import { FEATHER, lightningBolt } from "./art/projectiles";
 import { Boss, type Attack, type Phase } from "./Boss";
 
 /** Bottom of the body while hovering. */
