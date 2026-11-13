@@ -14,8 +14,15 @@ export interface TerrainDef {
   floor: [number, number][];
   platforms: PlatformDef[];
   spikes: SpikeDef[];
-  /** Floor colours (body, top edge). Default COLORS.ground / COLORS.platformTop. */
-  colors?: { ground: number; top: number };
+  /** Theme colours (floor body/top edge, platforms, spikes). Anything omitted falls back to COLORS. */
+  colors?: {
+    ground: number;
+    top: number;
+    platform?: number;
+    movingPlatform?: number;
+    platformTop?: number;
+    spikes?: number;
+  };
 }
 
 const SPIKE_H = 26;
@@ -46,13 +53,13 @@ export class Terrain extends Container {
       for (let i = 0; i < n; i++) {
         spikeGfx.poly([x + i * tw, GROUND_Y, x + (i + 0.5) * tw, GROUND_Y - SPIKE_H, x + (i + 1) * tw, GROUND_Y]);
       }
-      spikeGfx.fill(COLORS.spikes);
+      spikeGfx.fill(def.colors?.spikes ?? COLORS.spikes);
       // Hitbox is a bit shorter than the art so grazing the tips doesn't hurt.
       return { x: x + 4, y: GROUND_Y - SPIKE_H * 0.6, w: w - 8, h: SPIKE_H * 0.6 };
     });
     this.addChild(spikeGfx);
 
-    this.platforms = def.platforms.map((p) => new Platform(p));
+    this.platforms = def.platforms.map((p) => new Platform(p, def.colors));
     this.addChild(...this.platforms);
   }
 

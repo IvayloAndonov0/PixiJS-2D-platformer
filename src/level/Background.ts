@@ -13,13 +13,35 @@ import { GAME_HEIGHT, GAME_WIDTH, GROUND_Y } from "../config";
  */
 export type BackgroundTheme = "hills" | "storm" | "quarry" | "arcane" | "eclipse";
 
+/** Optional per-theme colours for platforms, spikes and the arena gate (default: the global COLORS). */
+export interface ThemeColors {
+  ground: number;
+  top: number;
+  platform?: number;
+  movingPlatform?: number;
+  platformTop?: number;
+  spikes?: number;
+  gate?: number;
+  gateBand?: number;
+}
+
 /** Floor colours that match each theme (body, top edge). */
-export const GROUND_COLORS: Record<BackgroundTheme, { ground: number; top: number }> = {
+export const GROUND_COLORS: Record<BackgroundTheme, ThemeColors> = {
   hills: { ground: 0x5a4632, top: 0xc8a97e },
   storm: { ground: 0x2f3b45, top: 0x7d93a3 },
   quarry: { ground: 0x6b4128, top: 0xd59a5e },
   arcane: { ground: 0x2c2244, top: 0x9f8ad6 },
-  eclipse: { ground: 0x1e1018, top: 0x9b4dca },
+  // Same palette as the boss art: deep violet, gold rim light, lavender glow.
+  eclipse: {
+    ground: 0x1a1030,
+    top: 0xd4a24a,
+    platform: 0x45306f,
+    movingPlatform: 0x6a4bb0,
+    platformTop: 0xe2b45c,
+    spikes: 0xcfa6ff,
+    gate: 0x241538,
+    gateBand: 0x4a2d73,
+  },
 };
 
 /** Furthest the camera goes left (the longest parkour starts at about -3600). */
@@ -64,6 +86,7 @@ export class Background extends Container {
   /** Ridge outlines (x, y pairs) so decorations can sit on top of them. */
   private outlines = new WeakMap<Graphics, number[]>();
   private corona?: Sprite;
+  private halo?: Graphics;
 
   constructor(private theme: BackgroundTheme = "hills") {
     super();
@@ -99,6 +122,7 @@ export class Background extends Container {
     for (const [i, g] of this.twinkle.entries()) g.alpha = 0.45 + 0.55 * Math.abs(Math.sin(this.time * (0.8 + i * 0.37) + i));
     for (const b of this.bobbers) b.view.y = b.baseY + Math.sin(this.time * 0.9 + b.phase) * b.amp;
     if (this.corona) this.corona.rotation += dt * 0.05;
+    if (this.halo) this.halo.rotation -= dt * 0.03;
     if (this.aurora) this.drawAurora();
     if (this.theme === "storm") this.updateLightning(dt);
     this.updateParticles(dt);
@@ -206,20 +230,27 @@ export class Background extends Container {
     }
   }
 
-  /** Eclipse Heart: blood-red horizon, the black sun overhead, aurora, ruins, embers. */
+  /**
+   * Eclipse Heart: violet night, the black sun overhead, aurora, ruins, embers.
+   * Palette (matches the boss sprites): deep violet for the sky and silhouettes, lavender glow,
+   * and gold only as the accent (sun rim, stars, cracks, embers).
+   */
   private buildEclipse(): void {
-    this.addChild(skyGradient(0x050308, 0x5e1608));
-    this.stars(0.02, 140, 0xffd9c2);
+    this.addChild(skyGradient(0x07040f, 0x3b1556));
+    this.stars(0.02, 140, 0xffe3b0);
 
     const glow = this.layer(0.03);
-    for (let r = 330; r > 120; r -= 30) glow.circle(640, 200, r).fill({ color: 0xff6d00, alpha: 0.05 });
+    for (let r = 330; r > 120; r -= 30) glow.circle(640, 200, r).fill({ color: 0x8a3fd0, alpha: 0.05 });
+    glow.circle(640, 200, 150).stroke({ color: 0xffc46b, width: 2, alpha: 0.18 }); // faint gold rim
     // Graphics can't have children in Pixi v8, so the sun sprite is its own layer.
     this.corona = new Sprite(frame("eclipse", "OrbBig"));
     this.corona.anchor.set(0.5);
     this.corona.scale.set(2.3);
     this.corona.position.set(640, 200);
     const sunLayer = new Container(); // parallax moves the layer, the sprite keeps its own position
-    sunLayer.addChild(this.corona);
+    this.halo = this.makeHalo();
+    this.halo.position.set(640, 200);
+    sunLayer.addChild(this.halo, this.corona);
     this.addChild(sunLayer);
     this.layers.push({ view: sunLayer, factor: 0.03 });
 
@@ -227,10 +258,15 @@ export class Background extends Container {
     this.aurora.alpha = 0.5;
     this.addChild(this.aurora);
 
-    this.ruins(0.12, 0x1d0b16);
-    const rocks = this.ridge(0.3, { base: 580, amp: 70, step: 36, jag: 40, color: 0x10060c });
+    // Far, plain ruins -> violet mist -> near, detailed ruins -> floating shards -> thorned rocks.
+    this.ruins(0.08, 0x1b0e30, { scale: 1.25, detail: false });
+    this.mist();
+    this.ruins(0.15, 0x26143f, { scale: 1, detail: true });
+    this.shards(0.22);
+    const rocks = this.ridge(0.3, { base: 580, amp: 70, step: 36, jag: 40, color: 0x170b28 });
     this.cracks(rocks, 0.3);
-    this.ridge(0.5, { base: 630, amp: 25, step: 40, jag: 18, color: 0x0a0408 });
+    this.thorns(rocks, 0.3, 0x1f1035);
+    this.ridge(0.5, { base: 630, amp: 25, step: 40, jag: 18, color: 0x0f0719 });
 
     this.particleStyle = "spark";
     for (let i = 0; i < 80; i++) {
@@ -241,7 +277,7 @@ export class Background extends Container {
         vy: -(30 + this.rand() * 60),
         size: 1.5 + this.rand() * 2.5,
         phase: this.rand() * 10,
-        color: this.rand() < 0.6 ? 0xff8a3c : 0xb36bff,
+        color: this.rand() < 0.5 ? 0xffc46b : 0xb36bff,
       });
     }
   }
@@ -395,25 +431,156 @@ export class Background extends Container {
     }
   }
 
-  /** Broken pillars and arches. */
-  private ruins(factor: number, color: number): void {
+  /**
+   * Gothic ruins: lancet arches (some broken), columns with capitals, and spires topped with a
+   * crescent and a small sun. `detail: false` gives plain silhouettes for the far layer.
+   */
+  private ruins(factor: number, color: number, o: { scale: number; detail: boolean }): void {
     const g = this.layer(factor);
     const [l, r] = this.span(factor);
-    for (let x = l; x < r; x += 120 + this.rand() * 220) {
-      const base = 560;
-      if (this.rand() < 0.35) {
-        // Arch
-        const w = 110;
-        const h = 160 + this.rand() * 60;
-        g.rect(x, base - h, 22, h).fill(color).rect(x + w, base - h, 22, h).fill(color);
-        g.moveTo(x, base - h).arc(x + w / 2 + 11, base - h, w / 2 + 11, Math.PI, 0).lineTo(x + w + 22, base - h).fill(color);
+    const rim = 0xe2b45c;
+    const base = 610;
+    const k = o.scale;
+    const rimLine = (x0: number, y0: number, x1: number, y1: number) => {
+      if (o.detail) g.moveTo(x0, y0).lineTo(x1, y1).stroke({ color: rim, width: 1.5, alpha: 0.4 });
+    };
+
+    for (let x = l; x < r; x += (150 + this.rand() * 230) * k) {
+      const kind = this.rand();
+      if (kind < 0.3) {
+        // Lancet arch on two piers; sometimes one side has collapsed.
+        const span = (90 + this.rand() * 40) * k;
+        const pier = 22 * k;
+        const h = (130 + this.rand() * 90) * k;
+        const top = base - h;
+        const x1 = x + span;
+        g.rect(x - pier, top, pier, h).fill(color).rect(x1, top, pier, h).fill(color);
+        g.rect(x - pier - 5, top - 9, pier + 10, 9).fill(color).rect(x1 - 5, top - 9, pier + 10, 9).fill(color); // capitals
+        g.rect(x - pier - 5, base - 12, pier + 10, 12).fill(color).rect(x1 - 5, base - 12, pier + 10, 12).fill(color); // bases
+        const broken = this.rand() < 0.35;
+        const maxPhi = Math.PI / 3; // 60 degrees = pointed apex
+        const pts: [number, number][] = [];
+        const leftEnd = broken ? maxPhi * (0.3 + this.rand() * 0.4) : maxPhi;
+        for (let i = 0; i <= 8; i++) {
+          const phi = (leftEnd * i) / 8;
+          pts.push([x1 - span * Math.cos(phi), top - 9 - span * Math.sin(phi)]);
+        }
+        if (!broken) {
+          for (let i = 7; i >= 0; i--) {
+            const phi = (maxPhi * i) / 8;
+            pts.push([x + span * Math.cos(phi), top - 9 - span * Math.sin(phi)]);
+          }
+        }
+        const stroke = (dy: number, width: number, c: number, alpha: number) => {
+          g.moveTo(pts[0][0], pts[0][1] + dy);
+          for (const [px, py] of pts) g.lineTo(px, py + dy);
+          g.stroke({ color: c, width, alpha });
+        };
+        stroke(0, 15 * k, color, 1);
+        if (o.detail) stroke(-6 * k, 1.5, rim, 0.4);
+        rimLine(x - pier - 5, top - 9, x - 5, top - 9);
+        rimLine(x1 - 5, top - 9, x1 + pier + 5, top - 9);
+      } else if (kind < 0.7) {
+        // A cluster of columns, some snapped off.
+        const n = 1 + Math.floor(this.rand() * 3);
+        let cx = x;
+        for (let c = 0; c < n; c++) {
+          const w = (26 + this.rand() * 12) * k;
+          const h = (90 + this.rand() * 170) * k;
+          const top = base - h;
+          const snapped = this.rand() < 0.5;
+          if (snapped) {
+            const cut = 8 + this.rand() * 26;
+            g.poly([cx, base, cx, top, cx + w * 0.55, top - cut * 0.3, cx + w, top + cut, cx + w, base]).fill(color);
+            g.poly([cx + w + 6, base, cx + w + 12, base - 14 * k, cx + w + 30 * k, base - 8 * k, cx + w + 34 * k, base]).fill(color); // fallen chunk
+            rimLine(cx, top, cx + w * 0.55, top - cut * 0.3);
+          } else {
+            g.rect(cx, top, w, h).fill(color);
+            g.rect(cx - 5, top - 10, w + 10, 10).fill(color); // capital
+            g.rect(cx - 4, base - 12, w + 8, 12).fill(color); // base
+            rimLine(cx - 5, top - 10, cx + w + 5, top - 10);
+          }
+          if (o.detail && h > 150 && this.rand() < 0.6) {
+            g.rect(cx + w / 2 - 2, top + 26, 4, 22).fill({ color: 0xb36bff, alpha: 0.55 }); // lit slit window
+          }
+          cx += w + 14 * k;
+        }
       } else {
-        // Broken pillar with a slanted top
-        const w = 26 + this.rand() * 14;
-        const h = 90 + this.rand() * 170;
-        const cut = this.rand() * 30;
-        g.poly([x, base, x, base - h, x + w, base - h + cut, x + w, base]).fill(color);
+        // Spire topped with a crescent and a tiny black sun.
+        const w = (36 + this.rand() * 14) * k;
+        const h = (170 + this.rand() * 110) * k;
+        const top = base - h;
+        const tip = top - 70 * k;
+        g.poly([x, base, x, top, x + w / 2, tip, x + w, top, x + w, base]).fill(color);
+        g.rect(x - 6, base - 14, w + 12, 14).fill(color);
+        if (o.detail) {
+          const mx = x + w / 2;
+          const my = tip - 16;
+          g.arc(mx, my, 13, Math.PI * 0.12, Math.PI * 0.88).stroke({ color: rim, width: 2.5, alpha: 0.7 });
+          g.circle(mx, my - 3, 4.5).fill({ color: 0x07040f }).circle(mx, my - 3, 4.5).stroke({ color: rim, width: 1.5, alpha: 0.8 });
+          g.moveTo(x, top).lineTo(x + w / 2, tip).stroke({ color: rim, width: 1.5, alpha: 0.35 });
+          g.rect(x + w / 2 - 2, top + 30, 4, 30).fill({ color: 0xb36bff, alpha: 0.55 });
+        }
       }
+    }
+  }
+
+  /** The boss's crown: gold rings and four-pointed star spikes behind the black sun. */
+  private makeHalo(): Graphics {
+    const g = new Graphics();
+    g.circle(0, 0, 215).stroke({ color: 0xffc46b, width: 2, alpha: 0.28 });
+    g.circle(0, 0, 250).stroke({ color: 0xb36bff, width: 3, alpha: 0.22 });
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4;
+      const long = i % 2 === 0;
+      const len = long ? 330 : 255;
+      const half = long ? 9 : 5;
+      const [c, s] = [Math.cos(a), Math.sin(a)];
+      g.poly([c * 120 - s * half, s * 120 + c * half, c * len, s * len, c * 120 + s * half, s * 120 - c * half]).fill({
+        color: long ? 0xffc46b : 0xb36bff,
+        alpha: long ? 0.28 : 0.2,
+      });
+    }
+    return g;
+  }
+
+  /** Soft violet mist between the ruin layers (screen-space, so it does not scroll). */
+  private mist(): void {
+    const g = new Graphics();
+    for (let i = 0; i < 8; i++) g.rect(0, 470 + i * 20, GAME_WIDTH, 20).fill({ color: 0x6a2fa0, alpha: 0.045 });
+    this.addChild(g);
+  }
+
+  /** Dark crystal shards drifting in the air, like the ones orbiting the boss. */
+  private shards(factor: number): void {
+    const holder = new Container();
+    this.addChild(holder);
+    this.layers.push({ view: holder, factor });
+    const [l, r] = this.span(factor);
+    for (let x = l + 40; x < r; x += 90 + this.rand() * 170) {
+      const g = new Graphics();
+      const h = 12 + this.rand() * 26;
+      const w = h * (0.28 + this.rand() * 0.15);
+      g.poly([0, -h, w, 0, 0, h * 0.7, -w, 0]).fill(0x2a1647);
+      g.poly([0, -h, w, 0, 0, h * 0.7, -w, 0]).stroke({ color: this.rand() < 0.6 ? 0xb36bff : 0xe2b45c, width: 1.5, alpha: 0.55 });
+      g.rotation = (this.rand() - 0.5) * 1.2;
+      const baseY = 120 + this.rand() * 330;
+      g.position.set(x, baseY);
+      holder.addChild(g);
+      this.bobbers.push({ view: g, baseY, phase: this.rand() * 6, amp: 5 + this.rand() * 9 });
+    }
+  }
+
+  /** Jagged crystal thorns growing out of a rock ridge, with a faint violet edge light. */
+  private thorns(on: Graphics, factor: number, color: number): void {
+    const [l, r] = this.span(factor);
+    for (let x = l; x < r; x += 26 + this.rand() * 60) {
+      const y = this.ridgeY(on, x) + 3;
+      const h = 18 + this.rand() * 38;
+      const w = 5 + this.rand() * 7;
+      const lean = (this.rand() - 0.5) * 14;
+      on.poly([x - w, y, x + lean, y - h, x + w, y]).fill(color);
+      on.moveTo(x - w, y).lineTo(x + lean, y - h).stroke({ color: 0xb36bff, width: 1, alpha: 0.4 });
     }
   }
 
@@ -429,7 +596,7 @@ export class Background extends Container {
         cy += 12 + this.rand() * 14;
         on.lineTo(cx, cy);
       }
-      on.stroke({ color: 0xb36bff, width: 2, alpha: 0.7 });
+      on.stroke({ color: 0xe8a84a, width: 2, alpha: 0.55 });
     }
   }
 
@@ -439,8 +606,8 @@ export class Background extends Container {
     const g = this.aurora!;
     g.clear();
     const bands = [
-      { y: 110, color: 0x9b4dca, amp: 18 },
-      { y: 160, color: 0xff6d00, amp: 12 },
+      { y: 110, color: 0x9b4dca, amp: 18, alpha: 0.18 },
+      { y: 160, color: 0xd9a441, amp: 12, alpha: 0.09 },
     ];
     for (const [i, b] of bands.entries()) {
       const pts: number[] = [];
@@ -450,7 +617,7 @@ export class Background extends Container {
       for (let x = GAME_WIDTH + 20; x >= -20; x -= 40) {
         pts.push(x, b.y + 26 + Math.sin(x * 0.006 + this.time * 0.6 + i * 2 + 0.6) * b.amp);
       }
-      g.poly(pts).fill({ color: b.color, alpha: 0.18 });
+      g.poly(pts).fill({ color: b.color, alpha: b.alpha });
     }
   }
 
