@@ -1,5 +1,5 @@
-import { Container, Graphics, Sprite, TilingSprite } from "pixi.js";
-import { frame, image } from "../assets";
+import { Container, Graphics, TilingSprite } from "pixi.js";
+import { image } from "../assets";
 import { GAME_HEIGHT, GAME_WIDTH, GROUND_Y } from "../config";
 
 /**
@@ -51,6 +51,9 @@ const WORLD_LEFT = -4200;
 const HILLS_SCALE = 0.8;
 const HILLS_ART_BOTTOM = 823;
 
+const SUN_SWELL_TIME = 0.5;
+const SUN_BLAST_TIME = 2.2;
+
 interface Layer {
   view: Container;
   factor: number;
@@ -85,8 +88,15 @@ export class Background extends Container {
   private aurora?: Graphics;
   /** Ridge outlines (x, y pairs) so decorations can sit on top of them. */
   private outlines = new WeakMap<Graphics, number[]>();
-  private corona?: Sprite;
+  private corona?: Graphics;
   private halo?: Graphics;
+  private sunDisc?: Graphics;
+  private sunLayer?: Container;
+  private sunGlow?: Graphics;
+  private sunBlast = new Graphics();
+  /** Seconds into the sun's explosion; -1 = not started. */
+  private blastT = -1;
+  private debris: { a: number; speed: number; size: number; gold: boolean }[] = [];
 
   constructor(private theme: BackgroundTheme = "hills") {
     super();
@@ -124,6 +134,7 @@ export class Background extends Container {
     if (this.corona) this.corona.rotation += dt * 0.05;
     if (this.halo) this.halo.rotation -= dt * 0.03;
     if (this.aurora) this.drawAurora();
+    if (this.blastT >= 0 && this.blastT < SUN_BLAST_TIME) this.updateSunBlast(dt);
     if (this.theme === "storm") this.updateLightning(dt);
     this.updateParticles(dt);
   }
@@ -242,15 +253,19 @@ export class Background extends Container {
     const glow = this.layer(0.03);
     for (let r = 330; r > 120; r -= 30) glow.circle(640, 200, r).fill({ color: 0x8a3fd0, alpha: 0.05 });
     glow.circle(640, 200, 150).stroke({ color: 0xffc46b, width: 2, alpha: 0.18 }); // faint gold rim
-    // Graphics can't have children in Pixi v8, so the sun sprite is its own layer.
-    this.corona = new Sprite(frame("eclipse", "OrbBig"));
-    this.corona.anchor.set(0.5);
-    this.corona.scale.set(2.3);
+    // Drawn in code like the rest of the scenery: slow-turning corona rays, halo, then the black disc.
+    this.corona = this.makeCorona();
     this.corona.position.set(640, 200);
-    const sunLayer = new Container(); // parallax moves the layer, the sprite keeps its own position
+    const sunLayer = new Container(); // parallax moves the layer, children keep their own positions
     this.halo = this.makeHalo();
     this.halo.position.set(640, 200);
-    sunLayer.addChild(this.halo, this.corona);
+    const disc = this.makeSunDisc();
+    disc.position.set(640, 200);
+    this.sunDisc = disc;
+    this.sunLayer = sunLayer;
+    this.sunGlow = glow;
+    this.sunBlast.position.set(640, 200);
+    sunLayer.addChild(this.halo, this.corona, disc, this.sunBlast);
     this.addChild(sunLayer);
     this.layers.push({ view: sunLayer, factor: 0.03 });
 
@@ -525,6 +540,34 @@ export class Background extends Container {
     }
   }
 
+  /** Thin flame-like rays around the sun, alternating gold and violet. */
+  private makeCorona(): Graphics {
+    const g = new Graphics();
+    const n = 28;
+    for (let i = 0; i < n; i++) {
+      const a = (i * Math.PI * 2) / n;
+      const len = 128 + (i % 3 === 0 ? 34 : i % 2 === 0 ? 18 : 8);
+      const half = 0.045;
+      const [c0, c1] = [Math.cos(a - half), Math.cos(a + half)];
+      const [s0, s1] = [Math.sin(a - half), Math.sin(a + half)];
+      g.poly([c0 * 106, s0 * 106, Math.cos(a) * len, Math.sin(a) * len, c1 * 106, s1 * 106]).fill({
+        color: i % 2 === 0 ? 0xffc46b : 0xb36bff,
+        alpha: i % 2 === 0 ? 0.45 : 0.3,
+      });
+    }
+    return g;
+  }
+
+  /** The black sun itself: dark disc, gold rim lit from the upper left, faint violet inner ring. */
+  private makeSunDisc(): Graphics {
+    const g = new Graphics();
+    g.circle(0, 0, 106).fill(0x07040f);
+    g.circle(0, 0, 106).stroke({ color: 0xe2b45c, width: 2, alpha: 0.7 });
+    g.circle(0, 0, 96).stroke({ color: 0xb36bff, width: 1.5, alpha: 0.3 });
+    g.arc(0, 0, 106, Math.PI * 0.75, Math.PI * 1.45).stroke({ color: 0xffd98a, width: 5, alpha: 0.9 });
+    return g;
+  }
+
   /** The boss's crown: gold rings and four-pointed star spikes behind the black sun. */
   private makeHalo(): Graphics {
     const g = new Graphics();
@@ -601,6 +644,84 @@ export class Background extends Container {
   }
 
   // ---------------------------------------------------------------- animation
+
+  /** Eclipse theme: the black sun swells, bursts into a shockwave and debris, and is gone. */
+  explodeSun(instant = false): void {
+    if (!this.sunLayer || this.blastT >= 0) return;
+    if (instant) {
+      this.finishSunBlast();
+      return;
+    }
+    this.blastT = 0;
+    for (let i = 0; i < 40; i++) {
+      this.debris.push({
+        a: (i / 40) * Math.PI * 2 + (this.rand() - 0.5) * 0.3,
+        speed: 180 + this.rand() * 420,
+        size: 2 + this.rand() * 5,
+        gold: this.rand() < 0.6,
+      });
+    }
+  }
+
+  private finishSunBlast(): void {
+    this.blastT = SUN_BLAST_TIME;
+    this.sunBlast.clear();
+    if (this.sunLayer) this.sunLayer.visible = false;
+    if (this.sunGlow) this.sunGlow.visible = false;
+    this.corona = undefined;
+    this.halo = undefined;
+  }
+
+  private updateSunBlast(dt: number): void {
+    this.blastT += dt;
+    if (this.blastT >= SUN_BLAST_TIME) return this.finishSunBlast();
+    const t = this.blastT;
+    const g = this.sunBlast.clear();
+    const disc = this.sunDisc!;
+    const burstAt = SUN_SWELL_TIME;
+
+    if (t < burstAt) {
+      // Charge up: the disc swells and shakes, the corona spins faster.
+      const u = t / burstAt;
+      disc.scale.set(1 + 0.15 * u);
+      disc.position.set(640 + (Math.random() - 0.5) * 8 * u, 200 + (Math.random() - 0.5) * 8 * u);
+      if (this.corona) {
+        this.corona.rotation += dt * 2 * u;
+        this.corona.scale.set(1 + 0.2 * u);
+      }
+      g.circle(0, 0, 106 * (1 + 0.15 * u)).stroke({ color: 0xffd98a, width: 3 + 6 * u, alpha: 0.4 * u });
+      return;
+    }
+
+    // Burst
+    const u = (t - burstAt) / (SUN_BLAST_TIME - burstAt);
+    const out = 1 - Math.pow(1 - u, 3);
+    disc.visible = false;
+    if (this.corona) {
+      this.corona.rotation += dt * 3;
+      this.corona.scale.set(1.2 + out * 2.5);
+      this.corona.alpha = 1 - u;
+    }
+    if (this.halo) {
+      this.halo.scale.set(1 + out * 1.5);
+      this.halo.alpha = Math.max(0, 1 - u * 1.6);
+    }
+    if (this.sunGlow) this.sunGlow.alpha = Math.max(0, 1 - u);
+
+    // Hot core flash, then two shockwave rings (gold, then violet).
+    g.circle(0, 0, 120 * (1 - u * 0.4) + out * 60).fill({ color: 0xfff0c0, alpha: Math.max(0, 0.9 - u * 3) });
+    g.circle(0, 0, 106 + out * 900).stroke({ color: 0xffc46b, width: 10 * (1 - u) + 2, alpha: 1 - u });
+    const u2 = Math.max(0, (u - 0.12) / 0.88);
+    g.circle(0, 0, 106 + (1 - Math.pow(1 - u2, 3)) * 700).stroke({ color: 0xb36bff, width: 7 * (1 - u2) + 1, alpha: u2 > 0 ? 0.8 * (1 - u2) : 0 });
+
+    // Debris flying outward with drag
+    const dist = (s: number) => 100 + s * 1.1 * (1 - Math.exp(-3 * u * 1.5)) / 1.5 * 1.5;
+    for (const d of this.debris) {
+      const r = dist(d.speed);
+      const s = d.size * (1 - u * 0.7);
+      g.circle(Math.cos(d.a) * r, Math.sin(d.a) * r, s).fill({ color: d.gold ? 0xffc46b : 0xb36bff, alpha: Math.max(0, 1 - u * 1.2) });
+    }
+  }
 
   private drawAurora(): void {
     const g = this.aurora!;

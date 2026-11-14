@@ -219,6 +219,7 @@ export class BossFightScene extends Scene {
     this.gateDrop = instant ? 1 : 0;
     this.hud.showBoss = true;
     this.playBossMusic();
+    this.background.explodeSun(instant);
     if (!instant) {
       this.bannerTimer = 1.6;
       this.fx.spawn("fx", "Smoke", 0, GROUND_Y - 20, { scale: 1.2 });
