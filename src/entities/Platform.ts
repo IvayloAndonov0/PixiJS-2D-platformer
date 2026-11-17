@@ -27,15 +27,19 @@ export class Platform extends Graphics {
   deltaY = 0;
   private time = 0;
 
-  constructor(private def: PlatformDef) {
+  constructor(
+    private def: PlatformDef,
+    /** Optional theme colours; default to the global COLORS. */
+    colors?: { platform?: number; movingPlatform?: number; platformTop?: number },
+  ) {
     super();
     this.w = def.w;
     this.position.set(def.x, def.y);
     // TODO(art): replace with a platform sprite (cloud, crate, plank...)
     this.roundRect(0, 0, def.w, THICKNESS, 6)
-      .fill(def.move ? COLORS.movingPlatform : COLORS.platform)
+      .fill(def.move ? (colors?.movingPlatform ?? COLORS.movingPlatform) : (colors?.platform ?? COLORS.platform))
       .rect(4, 0, def.w - 8, 4)
-      .fill(COLORS.platformTop);
+      .fill(colors?.platformTop ?? COLORS.platformTop);
   }
 
   get left(): number {

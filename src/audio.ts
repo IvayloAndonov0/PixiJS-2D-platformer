@@ -174,7 +174,7 @@ function softTone(
 }
 
 /** Synth effects get louder while music is playing so they stay audible over it. */
-const MUSIC_BOOST = 3;
+const MUSIC_BOOST = 6;
 const withMusicBoost = (volume: number): number => (musicEnabled && current !== undefined ? volume * MUSIC_BOOST : volume);
 
 /** Soft coin "ding": two gentle rising sine notes. */
@@ -187,7 +187,7 @@ export function playCoinSound(volume = 0.06): void {
 }
 
 /** Quiet, low "pup": a short downward-gliding sine with a little pitch variation so held fire isn't monotone. */
-export function playShootSound(volume = 0.04): void {
+export function playShootSound(volume = 0.2): void {
   const ctx = synthCtx();
   if (!ctx) return;
   const f = 330 * (0.94 + Math.random() * 0.12);

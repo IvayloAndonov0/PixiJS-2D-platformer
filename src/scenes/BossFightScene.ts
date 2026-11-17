@@ -98,8 +98,9 @@ export class BossFightScene extends Scene {
     });
 
     // Gate at the arena entrance (drawn closed, animated down when the lock triggers)
-    this.gate.rect(-14, 0, 28, GROUND_Y).fill(COLORS.gate).rect(-14, 0, 28, GROUND_Y).stroke({ color: 0x000000, width: 3 });
-    for (let y = 40; y < GROUND_Y; y += 60) this.gate.rect(-14, y, 28, 8).fill(0x5d4037);
+    const themeColors = GROUND_COLORS[theme];
+    this.gate.rect(-14, 0, 28, GROUND_Y).fill(themeColors.gate ?? COLORS.gate).rect(-14, 0, 28, GROUND_Y).stroke({ color: 0x000000, width: 3 });
+    for (let y = 40; y < GROUND_Y; y += 60) this.gate.rect(-14, y, 28, 8).fill(themeColors.gateBand ?? 0x5d4037);
     this.gate.visible = false;
 
     this.banner = new Text({ text: "FIGHT!", style: { fill: COLORS.text, fontSize: 96, fontWeight: "bold", stroke: { color: 0x000000, width: 8 } } });
@@ -218,6 +219,7 @@ export class BossFightScene extends Scene {
     this.gateDrop = instant ? 1 : 0;
     this.hud.showBoss = true;
     this.playBossMusic();
+    this.background.explodeSun(instant);
     if (!instant) {
       this.bannerTimer = 1.6;
       this.fx.spawn("fx", "Smoke", 0, GROUND_Y - 20, { scale: 1.2 });
