@@ -1,5 +1,5 @@
 import { Container, Graphics, Sprite, TilingSprite } from "pixi.js";
-import { frame, image } from "../assets";
+import { frame, image, type ImageName } from "../assets";
 import { GAME_HEIGHT, GAME_WIDTH, GROUND_Y } from "../config";
 
 /**
@@ -17,9 +17,14 @@ export type BackgroundTheme = "hills" | "storm" | "quarry" | "arcane" | "eclipse
 export const GROUND_COLORS: Record<BackgroundTheme, { ground: number; top: number }> = {
   hills: { ground: 0x5a4632, top: 0xc8a97e },
   storm: { ground: 0x2f3b45, top: 0x7d93a3 },
-  quarry: { ground: 0x6b4128, top: 0xd59a5e },
+  quarry: { ground: 0x2a1a1e, top: 0x7a4a48 },
   arcane: { ground: 0x2c2244, top: 0x9f8ad6 },
   eclipse: { ground: 0x1e1018, top: 0x9b4dca },
+};
+
+/** Platform art per theme; themes not listed keep the plain coloured blocks. */
+export const PLATFORM_TEXTURES: Partial<Record<BackgroundTheme, ImageName>> = {
+  eclipse: "platformEclipse",
 };
 
 /** Furthest the camera goes left (the longest parkour starts at about -3600). */
@@ -150,18 +155,21 @@ export class Background extends Container {
     this.addChild(this.particleGfx, this.flash); // rain under the lightning flash, so the flash lights it too
   }
 
-  /** Iron Golem: dusty sunset over layered mesas, mine scaffolding in front. */
+  /**
+   * Iron Golem: dusky, smoky sunset over layered mesas, mine scaffolding in front.
+   * Muted plum/rust palette so it sits with the dark, painterly player and thorn art.
+   */
   private buildQuarry(): void {
-    this.addChild(skyGradient(0x2c1610, 0xe7934a));
+    this.addChild(skyGradient(0x140c16, 0x6e3a36));
 
     const sun = this.layer(0.02);
-    for (let r = 220; r > 90; r -= 26) sun.circle(880, 400, r).fill({ color: 0xffc56b, alpha: 0.07 });
-    sun.circle(880, 400, 90).fill(0xffd98a);
+    for (let r = 220; r > 80; r -= 26) sun.circle(880, 400, r).fill({ color: 0xc8644a, alpha: 0.06 });
+    sun.circle(880, 400, 80).fill(0xd88a62);
 
-    this.mesas(0.1, 470, 0x8a5233, 0x7a4429);
-    this.mesas(0.22, 540, 0x60361f, 0x4f2b18);
-    const near = this.ridge(0.4, { base: 610, amp: 30, step: 70, jag: 20, color: 0x3a2214 });
-    this.scaffolds(near, 0.4, 0x24150c);
+    this.mesas(0.1, 470, 0x4a2c33, 0x3d242b);
+    this.mesas(0.22, 540, 0x33202a, 0x281820);
+    const near = this.ridge(0.4, { base: 610, amp: 30, step: 70, jag: 20, color: 0x1f141b });
+    this.scaffolds(near, 0.4, 0x130c11);
 
     this.particleStyle = "dot";
     for (let i = 0; i < 70; i++) {
@@ -172,7 +180,7 @@ export class Background extends Container {
         vy: (this.rand() - 0.5) * 10,
         size: 1.5 + this.rand() * 2.5,
         phase: this.rand() * 10,
-        color: 0xf5cfa0,
+        color: 0xb88a86,
       });
     }
   }

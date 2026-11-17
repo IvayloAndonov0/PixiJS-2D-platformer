@@ -5,7 +5,7 @@ import type { Game } from "../core/Game";
 import { Scene } from "../core/Scene";
 import { Player } from "../entities/Player";
 import type { Boss } from "../entities/bosses/Boss";
-import { Background, GROUND_COLORS } from "../level/Background";
+import { Background, GROUND_COLORS, PLATFORM_TEXTURES } from "../level/Background";
 import { Terrain } from "../level/Terrain";
 import { BulletPool } from "../systems/BulletPool";
 import { Effects } from "../systems/Effects";
@@ -76,6 +76,7 @@ export class BossFightScene extends Scene {
       platforms: [...(intro?.platforms ?? []), ...entry.platforms],
       spikes: intro?.spikes ?? [],
       colors: GROUND_COLORS[theme],
+      platformTexture: PLATFORM_TEXTURES[theme],
     });
 
     this.player = new Player(game.input, this.playerBullets, this.terrain, this.fx);

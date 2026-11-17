@@ -1,4 +1,5 @@
-import { Container, Graphics } from "pixi.js";
+import { Container, Graphics, Sprite } from "pixi.js";
+import { image, type ImageName } from "../assets";
 import { COLORS, GAME_HEIGHT, GROUND_Y } from "../config";
 import { Platform, type PlatformDef } from "../entities/Platform";
 import type { Rect } from "../systems/collision";
@@ -16,9 +17,12 @@ export interface TerrainDef {
   spikes: SpikeDef[];
   /** Floor colours (body, top edge). Default COLORS.ground / COLORS.platformTop. */
   colors?: { ground: number; top: number };
+  /** Art for the one-way platforms. Default: plain coloured blocks. */
+  platformTexture?: ImageName;
 }
 
-const SPIKE_H = 26;
+/** Drawn height of the thorns.png tile (the art itself is 128x64). */
+const THORN_H = 40;
 
 /** Floor spans, one-way platforms and spike strips. Owns their display objects. */
 export class Terrain extends Container {
@@ -38,21 +42,27 @@ export class Terrain extends Container {
     }
     this.addChild(ground);
 
-    // TODO(art): spike sprite
-    const spikeGfx = new Graphics();
+    // Thorn strips: the thorns.png tile repeated across each strip, stretched slightly so whole tiles fit.
+    const thornTex = image("thorns");
+    const tileW = thornTex.width * (THORN_H / thornTex.height);
     this.spikes = def.spikes.map(({ x, w }) => {
-      const n = Math.max(1, Math.round(w / 20));
+      const n = Math.max(1, Math.round(w / tileW));
       const tw = w / n;
       for (let i = 0; i < n; i++) {
-        spikeGfx.poly([x + i * tw, GROUND_Y, x + (i + 0.5) * tw, GROUND_Y - SPIKE_H, x + (i + 1) * tw, GROUND_Y]);
+        const s = new Sprite(thornTex);
+        s.anchor.set(0, 1);
+        s.position.set(x + i * tw, GROUND_Y + 2);
+        s.width = tw;
+        s.height = THORN_H;
+        this.addChild(s);
       }
-      spikeGfx.fill(COLORS.spikes);
       // Hitbox is a bit shorter than the art so grazing the tips doesn't hurt.
-      return { x: x + 4, y: GROUND_Y - SPIKE_H * 0.6, w: w - 8, h: SPIKE_H * 0.6 };
+      return { x: x + 4, y: GROUND_Y - THORN_H * 0.45, w: w - 8, h: THORN_H * 0.45 };
     });
-    this.addChild(spikeGfx);
 
-    this.platforms = def.platforms.map((p) => new Platform(p));
+    this.platforms = def.platforms.map(
+      (p) => new Platform(p, def.platformTexture && image(def.platformTexture)),
+    );
     this.addChild(...this.platforms);
   }
 

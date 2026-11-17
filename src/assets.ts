@@ -24,6 +24,8 @@ const IMAGES = {
   rock2: "assets/sprites/rocks/Rock2_grass_shadow_dark1.png",
   rock4: "assets/sprites/rocks/Rock4_1.png",
   rock5: "assets/sprites/rocks/Rock5_1.png",
+  thorns: "assets/sprites/tarains/thorns.png",
+  platformEclipse: "assets/sprites/tarains/eclipse_level/platform_eclipse.png",
 } as const;
 
 export type SheetName = keyof typeof SHEETS;
