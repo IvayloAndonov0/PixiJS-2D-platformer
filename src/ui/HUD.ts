@@ -2,7 +2,7 @@ import { Container, Graphics, Text } from "pixi.js";
 import { COLORS, GAME_WIDTH, SUPER } from "../config";
 import type { Input } from "../core/Input";
 import { itemById } from "../core/Upgrades";
-import type { Player } from "../entities/Player";
+import type { Fighter } from "../entities/Fighter";
 import type { Boss } from "../entities/bosses/Boss";
 
 /** Player HP + super meter + weapon (bottom-left) and boss health bar (top). */
@@ -18,7 +18,7 @@ export class HUD extends Container {
   showBoss = true;
 
   constructor(
-    private player: Player,
+    private player: Fighter,
     private boss: Boss,
     private input: Input,
   ) {

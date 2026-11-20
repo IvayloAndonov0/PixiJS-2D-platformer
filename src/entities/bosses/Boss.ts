@@ -5,7 +5,7 @@ import type { BulletPool } from "../../systems/BulletPool";
 import type { Bullet, BulletOptions } from "../Bullet";
 import { Effects } from "../../systems/Effects";
 import type { Rect } from "../../systems/collision";
-import type { Player } from "../Player";
+import type { BossTarget } from "../Fighter";
 
 /**
  * One boss attack. Called every frame while it runs.
@@ -57,7 +57,7 @@ export abstract class Boss extends Container {
     readonly bodyW: number,
     readonly bodyH: number,
     readonly bullets: BulletPool,
-    readonly player: Player,
+    readonly player: BossTarget,
     color: number = COLORS.boss,
   ) {
     super();

@@ -108,3 +108,19 @@ export const SHADOW_DASH = {
   trailEvery: 0.03, // s between afterimages
   trailLife: 0.25, // s each afterimage takes to fade
 };
+
+/** Plane levels (see entities/Plane.ts). Shares maxHp, invulnTime and parry/super rules with PLAYER. */
+export const PLANE = {
+  speed: 430, // px/s top speed
+  accel: 12, // how quickly it reaches top speed (higher = snappier)
+  hitW: 46, // hitbox, smaller than the art (feels fairer)
+  hitH: 22,
+  margin: 40, // keep the plane this far inside the screen edges
+  fireRate: 10, // Blaster shots per second
+  bulletSpeed: 1300,
+  rollSpeed: 820, // Dash = barrel roll
+  rollDuration: 0.22,
+  rollCooldown: 0.55,
+  parryCooldown: 0.45, // after a parry attempt (pressing Jump)
+  deathDuration: 2.2, // s spinning down before the results screen
+};

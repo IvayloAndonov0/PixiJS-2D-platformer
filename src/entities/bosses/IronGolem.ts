@@ -2,7 +2,7 @@ import { Graphics } from "pixi.js";
 import { GAME_WIDTH, GROUND_Y } from "../../config";
 import type { BulletPool } from "../../systems/BulletPool";
 import type { Bullet } from "../Bullet";
-import type { Player } from "../Player";
+import type { BossTarget } from "../Fighter";
 import { GolemModel } from "./art/GolemModel";
 import { BOULDER, ROCKET_FIST, ROCK_SPIKE, SHOCKWAVE } from "./art/projectiles";
 import { Boss, type Attack, type Phase } from "./Boss";
@@ -26,7 +26,7 @@ export class IronGolem extends Boss {
   private fist?: Bullet;
   private fistHigh = false;
 
-  constructor(bullets: BulletPool, player: Player) {
+  constructor(bullets: BulletPool, player: BossTarget) {
     super("Iron Golem", 380, 240, 230, bullets, player);
     this.position.set(HOME_X, GROUND_Y);
     this.useModel(this.golem);

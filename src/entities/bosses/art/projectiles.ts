@@ -29,6 +29,17 @@ export const FEATHER = shape("feather", (g) => {
   g.circle(18, 0, 3).fill(0xbfe9ff);
 });
 
+/** Small storm crow that chases the plane. Faces right; wings swept back. */
+export const CROWLING = shape("crowling", (g) => {
+  g.poly([-4, -2, -20, -18, -10, -2]).fill(0x1b2440); // upper wing
+  g.poly([-4, 2, -20, 18, -10, 2]).fill(0x1b2440); // lower wing
+  g.poly([-22, -5, -12, 0, -22, 5]).fill(0x1b2440); // tail
+  g.ellipse(0, 0, 14, 8).fill(0x26315a);
+  g.ellipse(2, -1, 7, 4).fill(0xbfd4ff); // light chest (turns green when parryable)
+  g.poly([12, -3, 22, 0, 12, 3]).fill(0xf2b134); // beak
+  g.circle(8, -3, 2).fill(0xff3b3b); // eye
+});
+
 /** Tornado funnel, bottom-center at (0, 0) of the drawing is offset so the bullet sits mid-funnel. */
 export const TORNADO = shape("tornado", (g) => {
   const rings = 9;

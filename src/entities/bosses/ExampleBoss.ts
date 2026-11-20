@@ -1,6 +1,6 @@
 import { GAME_WIDTH, GROUND_Y } from "../../config";
 import type { BulletPool } from "../../systems/BulletPool";
-import type { Player } from "../Player";
+import type { BossTarget } from "../Fighter";
 import { Boss, type Attack, type Phase } from "./Boss";
 
 const HOME_X = GAME_WIDTH - 200;
@@ -13,7 +13,7 @@ export class ExampleBoss extends Boss {
   protected phases: Phase[];
   private shotsFired = 0;
 
-  constructor(bullets: BulletPool, player: Player) {
+  constructor(bullets: BulletPool, player: BossTarget) {
     super("Example Boss", 300, 220, 320, bullets, player);
     this.position.set(HOME_X, GROUND_Y);
 

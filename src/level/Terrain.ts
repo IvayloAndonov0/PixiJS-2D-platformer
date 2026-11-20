@@ -53,7 +53,8 @@ export class Terrain extends Container {
     this.addChild(spikeGfx);
 
     this.platforms = def.platforms.map((p) => new Platform(p));
-    this.addChild(...this.platforms);
+    // addChild() with no arguments throws in Pixi, so skip it for flat / platform-less levels.
+    if (this.platforms.length > 0) this.addChild(...this.platforms);
   }
 
   /** Leftmost / rightmost solid floor. */

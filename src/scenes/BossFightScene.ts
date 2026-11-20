@@ -3,9 +3,12 @@ import { BOSSES } from "../bosses";
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, GROUND_Y, PLAYER, SUPER } from "../config";
 import type { Game } from "../core/Game";
 import { Scene } from "../core/Scene";
+import type { Fighter } from "../entities/Fighter";
+import { Plane } from "../entities/Plane";
 import { Player } from "../entities/Player";
 import type { Boss } from "../entities/bosses/Boss";
 import { Background, GROUND_COLORS } from "../level/Background";
+import { SkyBackground } from "../level/SkyBackground";
 import { Terrain } from "../level/Terrain";
 import { BulletPool } from "../systems/BulletPool";
 import { Effects } from "../systems/Effects";
@@ -28,15 +31,22 @@ const CAMERA_LEAD = 0.35;
  * can keep using plain screen coordinates. The camera follows the player through the parkour.
  * Once the player passes ARENA_LOCK_X a gate slams shut behind them, the camera locks onto the
  * arena, and the boss wakes up.
+ *
+ * Plane levels (BossEntry.mode = "plane"): no parkour, floor or gate. The player flies a Plane in
+ * front of a scrolling sky and the fight starts right away.
  */
 export class BossFightScene extends Scene {
   private world = new Container();
-  private background: Background;
+  private background: Background | SkyBackground;
   private playerBullets = new BulletPool("player");
   private bossBullets = new BulletPool("boss");
   private fx = new Effects();
   private terrain: Terrain;
-  private player: Player;
+  private player: Fighter;
+  private isPlane: boolean;
+  /** Controls reminder shown at the start of plane levels. */
+  private tip?: Text;
+  private tipTimer = 0;
   private boss: Boss;
   private hud: HUD;
   private gate = new Graphics();
@@ -67,18 +77,22 @@ export class BossFightScene extends Scene {
   ) {
     super(game);
     const entry = BOSSES[bossIndex];
-    const intro = skipIntro ? undefined : entry.intro;
+    this.isPlane = entry.mode === "plane";
+    const intro = skipIntro || this.isPlane ? undefined : entry.intro;
     const theme = entry.background ?? "hills";
-    this.background = new Background(theme);
+    this.background = this.isPlane ? new SkyBackground() : new Background(theme);
 
     this.terrain = new Terrain({
-      floor: [...(intro?.floor ?? []), [0, GAME_WIDTH]],
+      floor: this.isPlane ? [] : [...(intro?.floor ?? []), [0, GAME_WIDTH]],
       platforms: [...(intro?.platforms ?? []), ...entry.platforms],
       spikes: intro?.spikes ?? [],
       colors: GROUND_COLORS[theme],
     });
 
-    this.player = new Player(game.input, this.playerBullets, this.terrain, this.fx);
+    this.terrain.visible = !this.isPlane;
+    this.player = this.isPlane
+      ? new Plane(game.input, this.playerBullets, this.fx)
+      : new Player(game.input, this.playerBullets, this.terrain, this.fx);
     this.player.equip(loadout()); // shop weapons + charm from the current save file
     this.boss = entry.create(this.bossBullets, this.player);
     this.boss.fx = this.fx;
@@ -122,7 +136,25 @@ export class BossFightScene extends Scene {
       this.player.spawnAt(200);
       this.lockArena(true);
     }
+    if (this.isPlane) this.showPlaneIntro();
     this.applyCamera();
+  }
+
+  /** Plane levels start straight away: show the FIGHT! banner and a controls reminder. */
+  private showPlaneIntro(): void {
+    this.bannerTimer = 1.6;
+    const k = (a: Parameters<typeof this.game.input.labelFor>[0]) => this.game.input.labelFor(a);
+    this.tip = new Text({
+      text:
+        `Fly: ${k("left")} ${k("right")} ${k("up")} ${k("down")}    Shoot: ${k("shoot")}    Parry: ${k("jump")}
+` +
+        `Barrel roll: ${k("dash")}    Super: ${k("special")}`,
+      style: { fill: COLORS.text, fontSize: 20, align: "center", stroke: { color: 0x000000, width: 5 } },
+    });
+    this.tip.anchor.set(0.5, 0);
+    this.tip.position.set(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
+    this.tipTimer = 5;
+    this.addChild(this.tip);
   }
 
   update(dt: number): void {
@@ -160,6 +192,10 @@ export class BossFightScene extends Scene {
     if (!this.locked && this.player.x >= ARENA_LOCK_X && !this.player.isDead) this.lockArena(false);
     this.updateGateAndBanner(dt);
     this.updateCamera(dt);
+    if (this.tip) {
+      this.tipTimer = Math.max(0, this.tipTimer - dt);
+      this.tip.alpha = Math.min(1, this.tipTimer / 0.6);
+    }
 
     // Freeze on the killing blow so the death reads.
     if (!wasDead && this.player.isDead) this.freeze(PLAYER.deathFreeze, 0.5);
@@ -192,7 +228,7 @@ export class BossFightScene extends Scene {
   private lockArena(instant: boolean): void {
     this.locked = true;
     this.player.minX = 0; // can't go back left of the arena
-    this.gate.visible = true;
+    this.gate.visible = !this.isPlane;
     this.gateDrop = instant ? 1 : 0;
     this.hud.showBoss = true;
     if (!instant) {

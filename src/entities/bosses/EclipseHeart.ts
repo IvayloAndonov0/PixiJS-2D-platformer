@@ -3,7 +3,7 @@ import { frame } from "../../assets";
 import { GAME_WIDTH, GROUND_Y } from "../../config";
 import type { BulletPool } from "../../systems/BulletPool";
 import type { Bullet, BulletSprite } from "../Bullet";
-import type { Player } from "../Player";
+import type { BossTarget } from "../Fighter";
 import { Boss, type Attack, type Phase } from "./Boss";
 
 /** Bottom of the body while floating. */
@@ -45,7 +45,7 @@ export class EclipseHeart extends Boss {
   private vortex = { x: 0, y: 0 };
   private vortexHit?: Bullet;
 
-  constructor(bullets: BulletPool, player: Player) {
+  constructor(bullets: BulletPool, player: BossTarget) {
     super("Eclipse Heart", 480, 170, 250, bullets, player);
     this.position.set(GAME_WIDTH / 2, FLOAT_Y);
     this.body.visible = false; // placeholder box only kept for the hit-flash timing

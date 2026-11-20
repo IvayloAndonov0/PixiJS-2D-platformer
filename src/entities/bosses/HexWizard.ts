@@ -4,7 +4,7 @@ import type { PlatformDef } from "../Platform";
 import type { Rect } from "../../systems/collision";
 import type { BulletPool } from "../../systems/BulletPool";
 import type { Bullet } from "../Bullet";
-import type { Player } from "../Player";
+import type { BossTarget } from "../Fighter";
 import { WizardModel } from "./art/WizardModel";
 import { ARCANE_BOLT, HEX_ORB, HEX_WISP, RUNE_BAR, RUNE_CIRCLE } from "./art/projectiles";
 import { Boss, type Attack, type Phase } from "./Boss";
@@ -41,7 +41,7 @@ export class HexWizard extends Boss {
   private wisps: { b: Bullet; age: number }[] = [];
   private traps: { x: number; y: number }[] = [];
 
-  constructor(bullets: BulletPool, player: Player) {
+  constructor(bullets: BulletPool, player: BossTarget) {
     super("Hex Wizard", 340, 90, 170, bullets, player);
     this.position.set(SPOTS[0].x, SPOTS[0].y);
     this.useModel(this.wizard);
